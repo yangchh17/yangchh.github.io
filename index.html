@@ -69,10 +69,33 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: 'Map data © OpenStreetMap contributors'
 }).addTo(map);
 
-var marker = L.marker([54, -125]).addTo(map);
+// Hartley Bay – Asset Monitoring
+var hartley = L.marker([53.42, -129.25]).addTo(map);
 
-marker.bindPopup("GIS Projects in Western Canada");
+hartley.bindPopup(
+'<b>Infrastructure Asset Monitoring</b><br>Hartley Bay<br><a href="asset-monitoring.html">View Project</a>'
+);
 
+// Masset Airport – OLS
+var masset = L.marker([54.01, -132.12]).addTo(map);
+
+masset.bindPopup(
+'<b>Airport OLS Hazard Analysis</b><br>Masset Airport<br>Project Page Coming Soon'
+);
+
+// Haida Gwaii / Homalco – Bioregional Atlas
+var atlas = L.marker([53.5, -132.0]).addTo(map);
+
+atlas.bindPopup(
+'<b>Bioregional Atlas</b><br>Haida Gwaii & Homalco First Nation<br>Project Page Coming Soon'
+);
+
+// Auto zoom to projects
+map.fitBounds([
+[53.42, -129.25],
+[54.01, -132.12],
+[53.5, -132.0]
+]);
 </script>
 
 </body>
