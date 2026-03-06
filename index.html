@@ -564,7 +564,7 @@
       </p>
       <div class="hero-links">
         <a href="#projects" class="btn btn-primary">View Projects</a>
-        <a href="mailto:yangchh@pm.me" class="btn btn-outline">yangchh@pm.me</a>
+        <a href="/cdn-cgi/l/email-protection#2a534b444d4942426a5a4704474f" class="btn btn-outline"><span class="__cf_email__" data-cfemail="3a435b545d5952527a4a5714575f">[email&#160;protected]</span></a>
       </div>
     </div>
   </div>
@@ -578,10 +578,10 @@
 
       <a href="asset-monitoring.html" class="project-card">
         <div class="project-number">01</div>
-        <div class="project-title">Infrastructure Asset Monitoring System</div>
+        <div class="project-title">Asset Management — Remote Community Infrastructure</div>
         <div class="project-desc">
           Field-to-office GIS workflow using Survey123 and ArcGIS Dashboards to centralize
-          condition data for 100+ community infrastructure assets in a remote First Nations community.
+          condition data for 100+ infrastructure assets in a remote community.
         </div>
         <div class="project-tags">
           <span class="tag">Survey123</span>
@@ -594,50 +594,85 @@
 
       <a href="airport-ols.html" class="project-card">
         <div class="project-number">02</div>
-        <div class="project-title">Airport OLS Hazard Analysis</div>
+        <div class="project-title">Airport OLS Modeling & Hazard Tree Detection</div>
         <div class="project-desc">
-          3D obstacle limitation surface modeling per ICAO Annex 14 standards to identify
-          tree hazards affecting aviation safety at a regional BC airport.
+          3D airspace compliance modeling per ICAO Annex 14, LiDAR-based individual tree
+          detection, and timber volume estimation to support hazard management and cost recovery.
         </div>
         <div class="project-tags">
-          <span class="tag">3D Modeling</span>
           <span class="tag">ICAO Annex 14</span>
-          <span class="tag">ArcGIS Pro</span>
           <span class="tag">LiDAR</span>
+          <span class="tag">Tree Detection</span>
+          <span class="tag">Timber Volume</span>
         </div>
         <div class="project-arrow">→</div>
       </a>
 
-      <div class="project-card coming-soon">
+      <a href="bioregional-atlas.html" class="project-card">
         <div class="project-number">03</div>
-        <div class="project-title">Bioregional Atlas Map Series</div>
+        <div class="project-title">Bioregional Atlas — Multi-Themed Map Series</div>
         <div class="project-desc">
-          Multi-themed environmental mapping supporting Indigenous consultation processes
-          and executive-level regional planning decisions.
+          Multi-theme printed atlas supporting Indigenous consultation and executive-level
+          regional planning, built on a parametric ArcGIS Pro template system.
         </div>
         <div class="project-tags">
           <span class="tag">ArcGIS Pro</span>
           <span class="tag">Map Series</span>
           <span class="tag">Cartography</span>
+          <span class="tag">Netdown Analysis</span>
         </div>
-        <div class="coming-badge">Coming soon</div>
-      </div>
+        <div class="project-arrow">→</div>
+      </a>
 
-      <div class="project-card coming-soon">
+      <a href="hydro-terrain.html" class="project-card">
         <div class="project-number">04</div>
-        <div class="project-title">Hydrological Terrain Automation</div>
+        <div class="project-title">Terrain Modeling & Hydrological Analysis</div>
         <div class="project-desc">
-          LiDAR processing pipeline in R to generate high-res DEMs, stream order extraction,
-          watershed metrics, and volumetric stockpile analysis — fully documented for reproducibility.
+          Reproducible LiDAR pipeline in R generating 0.5m DTMs, stream network extraction
+          by Strahler order, and watershed basin delineation — fully scripted and documented.
         </div>
         <div class="project-tags">
           <span class="tag">R / lidR</span>
-          <span class="tag">LiDAR</span>
-          <span class="tag">Python</span>
-          <span class="tag">Hydrology</span>
+          <span class="tag">DTM</span>
+          <span class="tag">Stream Order</span>
+          <span class="tag">Watershed</span>
         </div>
-        <div class="coming-badge">Coming soon</div>
-      </div>
+        <div class="project-arrow">→</div>
+      </a>
+
+      <a href="stockpile-volume.html" class="project-card">
+        <div class="project-number">05</div>
+        <div class="project-title">Stockpile Volume Estimation</div>
+        <div class="project-desc">
+          Spatial volume estimation workflow for quarry stockpiles using LiDAR and drone
+          SfM photogrammetry — replacing manual tape surveys with reproducible, auditable
+          DSM-to-DTM differencing.
+        </div>
+        <div class="project-tags">
+          <span class="tag">LiDAR</span>
+          <span class="tag">Drone / SfM</span>
+          <span class="tag">Cut-Fill Analysis</span>
+          <span class="tag">ArcGIS Pro</span>
+        </div>
+        <div class="project-arrow">→</div>
+      </a>
+
+      <a href="etl-geodatabase.html" class="project-card">
+        <div class="project-number">06</div>
+        <div class="project-title">Geospatial ETL & Geodatabase Automation</div>
+        <div class="project-desc">
+          Organization-wide geodatabase schema design, CAD-to-GIS transformation standards,
+          and Python/FME pipelines that automate multi-source dataset synchronization
+          across disciplines.
+        </div>
+        <div class="project-tags">
+          <span class="tag">Python</span>
+          <span class="tag">FME</span>
+          <span class="tag">ModelBuilder</span>
+          <span class="tag">Schema Design</span>
+        </div>
+        <div class="project-arrow">→</div>
+      </a>
 
     </div>
   </section>
@@ -656,20 +691,20 @@
         <ul class="skill-list">
           <li>ArcGIS Pro / ArcGIS Online</li>
           <li>QGIS / SAGA</li>
-          <li>FME (Safe Software)</li>
           <li>Leaflet.js</li>
           <li>ENVI</li>
+          <li>SQL (basic)</li>
         </ul>
       </div>
 
       <div class="skill-group">
-        <div class="skill-group-title">Programming</div>
+        <div class="skill-group-title">Programming & Automation</div>
         <ul class="skill-list">
-          <li>Python (automation, ETL)</li>
+          <li>Python / ArcPy</li>
           <li>R (lidR, spatial analysis)</li>
           <li>Arcade (dashboard logic)</li>
+          <li>FME (Safe Software)</li>
           <li>ModelBuilder</li>
-          <li>SQL (basic)</li>
         </ul>
       </div>
 
@@ -677,21 +712,43 @@
         <div class="skill-group-title">Data Engineering</div>
         <ul class="skill-list">
           <li>Geodatabase schema design</li>
-          <li>CAD-to-GIS transformation</li>
           <li>ETL pipeline development</li>
           <li>Metadata standards</li>
           <li>Version control workflows</li>
+          <li>Multi-source data integration</li>
         </ul>
       </div>
 
       <div class="skill-group">
-        <div class="skill-group-title">Analysis</div>
+        <div class="skill-group-title">CAD & Interoperability</div>
+        <ul class="skill-list">
+          <li>CAD-to-GIS transformation</li>
+          <li>Georeferencing</li>
+          <li>Cross-platform data alignment</li>
+          <li>Coordinate system management</li>
+          <li>Geometry validation & repair</li>
+        </ul>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-title">Spatial Analysis</div>
         <ul class="skill-list">
           <li>LiDAR point cloud processing</li>
           <li>Terrain & hydrology modeling</li>
+          <li>3D surface & OLS modeling</li>
           <li>Volumetric analysis</li>
-          <li>3D surface modeling</li>
-          <li>Remote sensing (ENVI)</li>
+          <li>Individual tree detection</li>
+        </ul>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-title">Field & Visualization</div>
+        <ul class="skill-list">
+          <li>ArcGIS Survey123 / FieldMaps</li>
+          <li>ArcGIS Dashboards</li>
+          <li>Map series & atlas production</li>
+          <li>Executive reporting outputs</li>
+          <li>Drone pilot (Basic)</li>
         </ul>
       </div>
 
@@ -751,7 +808,7 @@
     <div class="contact-bar">
       <div class="contact-text">Let's work together.</div>
       <div class="contact-links">
-        <a href="mailto:yangchh@pm.me" class="btn btn-primary">yangchh@pm.me</a>
+        <a href="/cdn-cgi/l/email-protection#285149464f4b404068584506454d" class="btn btn-primary"><span class="__cf_email__" data-cfemail="7a031b141d1912123a0a1754171f">[email&#160;protected]</span></a>
         <a href="https://github.com/chhyang17" class="btn btn-outline" target="_blank">GitHub</a>
         <a href="https://www.linkedin.com/in/yangchh/" class="btn btn-outline" target="_blank">LinkedIn</a>
       </div>
@@ -764,7 +821,7 @@
   </footer>
 
   <!-- MAP SCRIPT -->
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     var map = L.map('map', { zoomControl: false, attributionControl: false });
 
     // CartoDB Dark
@@ -793,7 +850,7 @@
     masset.bindPopup('<b>Airport OLS Hazard Analysis</b><br><a href="airport-ols.html">→ View Project</a>');
 
     var atlas = L.marker([50.02, -125.24], { icon: projIcon }).addTo(map);
-    atlas.bindPopup('<b>Bioregional Atlas</b><br><span style="color:#7d8fa8;font-size:11px;font-family:monospace;">Coming soon</span>');
+    atlas.bindPopup('<b>Bioregional Atlas</b><br><a href="bioregional-atlas.html">→ View Project</a>');
 
     var vancouver = L.marker([49.25, -123.12], { icon: vanIcon }).addTo(map);
     vancouver.bindPopup('<b>Vancouver, BC</b><br><span style="color:#7d8fa8;font-size:11px;font-family:monospace;">Based here</span>');
@@ -807,18 +864,4 @@
       [50.02, -125.24],
       [49.25, -123.12]
     ];
-    map.fitBounds(allPoints, {
-      paddingTopLeft:     [40, 40],
-      paddingBottomRight: [40, 220]
-    });
-
-    // wait 2s for fitBounds to settle, then start slow cinematic drift
-    setTimeout(function() {
-      setInterval(function() {
-        map.panBy([30, 0], { animate: true, duration: 6 });
-      }, 7000);
-    }, 2000);
-  </script>
-
-</body>
-</html>
+    map
