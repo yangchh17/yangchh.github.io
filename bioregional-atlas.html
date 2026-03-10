@@ -1,266 +1,917 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bioregional Atlas Map Series | Chenghao Yang</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <title>Bioregional Atlas | Chenghao Yang</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    :root { --bg:#0f0c0a;--surface:#1a1410;--surface2:#241a14;--border:#3d2318;--accent:#e85d3a;--accent2:#f0a060;--text:#f5ede8;--muted:#9a7a6e; }
+    :root{--bg:#0f0c0a;--surface:#1a1410;--surface2:#241a14;--border:#3d2318;--accent:#e85d3a;--accent2:#f0a060;--text:#f5ede8;--body:#d4b8ad;--muted:#9a7a6e;}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;line-height:1.7;}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(232,93,58,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(232,93,58,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
-    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:rgba(15,12,10,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
-    .nav-logo{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);letter-spacing:0.05em;text-decoration:none;}
-    .nav-back{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);text-decoration:none;letter-spacing:0.06em;display:flex;align-items:center;gap:6px;transition:color 0.2s;}
-    .nav-back:hover{color:var(--accent);}
-    .case-hero{position:relative;z-index:1;padding:160px 48px 80px;max-width:900px;margin:0 auto;border-bottom:1px solid var(--border);}
-    .case-meta{display:flex;gap:24px;flex-wrap:wrap;margin-top:40px;}
-    .meta-item{display:flex;flex-direction:column;gap:4px;}
-    .meta-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;}
-    .meta-value{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);}
-    .case-number{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;}
-    .case-title{font-family:'Syne',sans-serif;font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1.1;letter-spacing:-0.02em;margin-bottom:24px;padding-bottom:6px;}
-    .case-title span{color:var(--accent);}
-    .case-summary{font-size:17px;color:var(--muted);max-width:640px;line-height:1.8;}
-    .case-content{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 48px 96px;}
-    .phase{display:grid;grid-template-columns:200px 1fr;gap:48px;padding:64px 0;border-bottom:1px solid var(--border);}
-    .phase:last-child{border-bottom:none;}
-    .phase-label-col{padding-top:4px;}
-    .phase-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;}
-    .phase-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);line-height:1.2;position:relative;}
-    .phase-name::after{content:'';display:block;width:24px;height:2px;background:var(--accent);margin-top:12px;}
-    .phase-body{display:flex;flex-direction:column;gap:20px;}
-    .phase-body p{font-size:15px;color:var(--muted);line-height:1.85;}
-    .phase-body p strong{color:var(--text);font-weight:500;}
-    .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:20px 24px;font-size:14px;color:var(--muted);line-height:1.7;}
-    .callout strong{color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:6px;}
-    .outcome-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:8px;}
-    .outcome-stat{background:var(--surface);padding:28px 24px;}
-    .outcome-value{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:6px;}
-    .outcome-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;line-height:1.5;}
-    .tech-stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
-    .tech-pill{font-family:'DM Mono',monospace;font-size:11px;padding:5px 12px;border-radius:4px;background:var(--surface2);color:var(--text);border:1px solid var(--border);letter-spacing:0.04em;}
-    .phase-subtitle{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;}
-    .phase-divider{height:1px;background:var(--border);margin:8px 0 28px;}
-    .case-nav{display:flex;justify-content:space-between;align-items:center;padding:48px;border-top:1px solid var(--border);max-width:900px;margin:0 auto;position:relative;z-index:1;}
-    .case-nav a{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);text-decoration:none;letter-spacing:0.06em;display:flex;align-items:center;gap:8px;transition:color 0.2s;}
-    .case-nav a:hover{color:var(--accent);}
-    @media(max-width:768px){
-      nav{padding:16px 24px;}
-      .case-hero{padding:120px 24px 64px;}
-      .case-content{padding:0 24px 64px;}
-      .phase{grid-template-columns:1fr;gap:24px;}
-      .phase-name::after{display:none;}
-      .outcome-stats{grid-template-columns:1fr;}
-      .case-nav{padding:32px 24px;}
-    }
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(232,93,58,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,93,58,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
-    /* ── PROJECT MAP ── */
-    .project-map-section {
-      position: relative;
-      z-index: 1;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 0 48px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .map-label {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      padding-top: 48px;
-    }
-    .map-label span {
-      color: var(--accent);
-      margin-left: 8px;
-    }
-    .project-map-container {
-      width: 100%;
-      height: 340px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-      margin-bottom: 48px;
-    }
-    .leaflet-popup-content-wrapper {
-      background: var(--surface2, #241a14);
-      color: var(--text, #f5ede8);
-      border: 1px solid var(--border, #3d2318);
-      border-radius: 6px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    }
-    .leaflet-popup-tip { background: var(--surface2, #241a14); }
-    .leaflet-popup-content { font-family: 'DM Sans', sans-serif; font-size: 12px; line-height: 1.6; }
-    .leaflet-popup-content b { font-family: 'Syne', sans-serif; color: #e85d3a; }
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(15,12,10,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+    .nav-logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);text-decoration:none;}
+    .nav-logo span{color:var(--accent);}
+    .nav-back{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.08em;transition:color .2s;}
+    .nav-back:hover{color:var(--accent);}
+
+    /* PAGE */
+    .page{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 48px;}
+
+    /* HERO */
+    .hero{padding:120px 0 64px;}
+    .hero-eyebrow{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px;}
+    .hero-eyebrow span{color:var(--accent);margin-right:10px;}
+    h1{font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,60px);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin-bottom:20px;}
+    h1 em{color:var(--accent);font-style:normal;}
+    .hero-system-line{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px;padding-left:2px;}
+    .hero-summary{font-size:15px;color:var(--body);max-width:640px;line-height:1.9;margin-bottom:48px;}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+    .metric{background:var(--surface);padding:20px 22px;}
+    .metric-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:4px;}
+    .metric-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;line-height:1.4;}
+
+    /* SECTION */
+    .section{padding:72px 0;}
+    .section+.section{border-top:1px solid var(--border);}
+    .sec-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px;}
+    .sec-tag span{color:var(--accent);margin-right:8px;}
+    .sec-capability{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;opacity:.85;}
+    h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:20px;position:relative;padding-bottom:12px;}
+    h2::after{content:'';position:absolute;bottom:0;left:0;width:28px;height:2px;background:var(--accent);}
+    .sec-body{display:flex;flex-direction:column;gap:14px;margin-bottom:32px;}
+    .sec-body p{font-size:14px;color:var(--body);line-height:1.88;}
+    .sec-body p strong{color:var(--text);font-weight:500;}
+    .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);padding:16px 20px;border-radius:0 4px 4px 0;}
+    .callout strong{display:block;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
+    .callout p{font-size:13px;color:var(--muted);line-height:1.75;margin:0;}
+    .tech-stack{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;}
+    .tech-pill{font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:3px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+
+    /* VIS WRAP */
+    .vis-wrap{border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--surface);}
+    .vis-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .vis-label span{color:var(--muted);opacity:.6;font-size:9px;}
+
+    /* ── MAP SERIES GRID ── */
+    .grid-wrap{padding:20px 20px 16px;}
+    .grid-hint{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.06em;margin-bottom:14px;opacity:.8;}
+    #series-grid{display:grid;gap:4px;}
+    .sg-col-head{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.04em;text-align:center;padding-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .sg-row-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.04em;display:flex;align-items:center;padding-right:4px;white-space:nowrap;}
+    .sg-tile{height:34px;border-radius:3px;border:1px solid;display:flex;align-items:center;justify-content:center;cursor:default;position:relative;transition:all .15s;}
+    .sg-tile:hover .sg-tooltip{opacity:1;pointer-events:none;}
+    .sg-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1410;border:1px solid var(--border);border-radius:3px;padding:5px 9px;font-family:'DM Mono',monospace;font-size:9px;color:var(--text);letter-spacing:.04em;white-space:nowrap;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;}
+    .sg-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1a1410;}
+    /* availability tiers */
+    .avail-rich    {background:rgba(109,191,138,.15);border-color:rgba(109,191,138,.45);}
+    .avail-partial {background:rgba(240,160,96,.10);border-color:rgba(240,160,96,.35);}
+    .avail-limited {background:rgba(232,93,58,.08);border-color:rgba(232,93,58,.25);}
+    .avail-rich:hover    {background:rgba(109,191,138,.28);border-color:rgba(109,191,138,.8);}
+    .avail-partial:hover {background:rgba(240,160,96,.22);border-color:rgba(240,160,96,.8);}
+    .avail-limited:hover {background:rgba(232,93,58,.18);border-color:rgba(232,93,58,.8);}
+    .avail-icon{font-size:11px;}
+    /* legend */
+    .sg-legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
+    .sg-legend-item{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.06em;}
+    .sg-legend-swatch{width:14px;height:10px;border-radius:2px;border:1px solid;}
+
+    /* ── TAXONOMY ── */
+    .tax-root{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent);padding:10px 16px;border:1px solid rgba(232,93,58,.4);border-radius:4px;text-align:center;margin:20px 20px 0;}
+    .tax-root::after{content:'';display:block;width:2px;height:14px;background:var(--border);margin:0 auto;}
+    .tax-themes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 20px 20px;}
+    .tax-theme{border:1px solid var(--border);border-radius:4px;overflow:hidden;cursor:pointer;transition:border-color .2s;}
+    .tax-theme:hover,.tax-theme.open{border-color:var(--accent);}
+    .tax-hd{padding:10px 12px;display:flex;align-items:center;gap:7px;user-select:none;}
+    .tax-icon{font-size:14px;flex-shrink:0;}
+    .tax-name{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.05em;flex:1;line-height:1.3;}
+    .tax-arrow{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+    .tax-theme.open .tax-arrow{transform:rotate(90deg);}
+    .tax-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+    .tax-theme.open .tax-body{max-height:300px;}
+    .tax-layer{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);padding:5px 12px;border-top:1px solid var(--border);letter-spacing:.04em;display:flex;align-items:center;gap:5px;line-height:1.4;}
+    .tax-layer::before{content:'—';color:var(--accent);opacity:.45;flex-shrink:0;}
+    .tax-source{font-size:8px;color:var(--border);margin-left:auto;letter-spacing:.04em;}
+
+    /* ── PIPELINE ── */
+    .pipeline-wrap{padding:24px 20px;}
+    .pipeline{display:flex;align-items:flex-start;overflow-x:auto;padding-bottom:6px;gap:0;}
+    .pipe-stage{display:flex;flex-direction:column;align-items:center;flex:1;min-width:90px;}
+    .pipe-box{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:12px 8px;text-align:center;width:100%;transition:border-color .2s;}
+    .pipe-box:hover{border-color:var(--accent);}
+    .pipe-icon{font-size:16px;display:block;margin-bottom:6px;}
+    .pipe-name{font-family:'DM Mono',monospace;font-size:10px;color:var(--text);letter-spacing:.05em;display:block;margin-bottom:4px;}
+    .pipe-sub{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);display:block;line-height:1.6;}
+    .pipe-arrow{padding:0 3px;color:var(--border);font-size:12px;padding-top:22px;flex-shrink:0;}
+
+    /* ── LIDAR PIPELINE ── */
+    .lidar-wrap{padding:20px;}
+    .lidar-stages{display:flex;flex-direction:column;gap:6px;}
+    .lidar-stage{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;}
+    .lidar-line{display:flex;flex-direction:column;align-items:center;padding-top:3px;}
+    .lidar-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+    .lidar-connector{width:2px;flex:1;min-height:24px;background:linear-gradient(var(--border),transparent);}
+    .lidar-stage:last-child .lidar-connector{display:none;}
+    .lidar-card{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:11px 14px;cursor:pointer;transition:border-color .2s;}
+    .lidar-card:hover,.lidar-card.open{border-color:var(--accent);}
+    .lidar-card-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .lidar-stage-name{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);letter-spacing:.05em;}
+    .lidar-stage-tool{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.06em;background:rgba(232,93,58,.1);padding:2px 7px;border-radius:2px;border:1px solid rgba(232,93,58,.2);white-space:nowrap;}
+    .lidar-expand-icon{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+    .lidar-card.open .lidar-expand-icon{transform:rotate(90deg);color:var(--accent);}
+    .lidar-detail{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+    .lidar-card.open .lidar-detail{max-height:220px;}
+    .lidar-detail-inner{margin-top:10px;border-top:1px solid var(--border);padding-top:10px;display:flex;flex-wrap:wrap;gap:5px;}
+    .lidar-fn{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:3px 8px;border-radius:2px;letter-spacing:.03em;}
+    .lidar-fn em{color:var(--accent2);font-style:normal;}
+    .lidar-hint{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.08em;text-align:right;margin-top:10px;opacity:.6;}
+
+    /* ── BC DATA MAP ── */
+    .map-outer{display:grid;grid-template-columns:1fr 210px;height:480px;}
+    .map-canvas-col{position:relative;height:100%;overflow:hidden;}
+    #bc-map{width:100%;height:100%;}
+    .map-sidebar{border-left:1px solid var(--border);height:100%;display:flex;flex-direction:column;overflow:hidden;}
+    .map-sidebar-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+    .map-sidebar-scroll::-webkit-scrollbar{width:3px;}
+    .map-sidebar-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+    .map-sidebar-section{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .map-sidebar-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;}
+    .map-view-btns{display:flex;flex-direction:column;gap:4px;}
+    .map-view-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;padding:6px 10px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:3px;cursor:pointer;transition:all .2s;text-align:left;}
+    .map-view-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+    .map-view-btn.active{border-color:var(--accent2);color:var(--accent2);background:rgba(240,160,96,.08);}
+    .loc-controls{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+    .loc-btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.06em;padding:5px 10px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:3px;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:5px;}
+    .loc-btn:hover{border-color:var(--accent);color:var(--text);}
+    .loc-btn .lb-icon{font-size:10px;}
+    .loc-status{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:.06em;margin-top:4px;min-height:14px;opacity:.7;}
+    .layer-list{display:flex;flex-direction:column;gap:3px;padding:10px 14px 4px;}
+    .layer-toggle{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.04em;padding:5px 8px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:3px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;text-align:left;width:100%;}
+    .layer-toggle .l-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:box-shadow .2s;}
+    .layer-toggle.on{color:var(--text);}
+    .layer-toggle.on .l-dot{box-shadow:0 0 5px currentColor;}
+    /* dynamic legend */
+    .map-legend-wrap{padding:0 14px 10px;display:flex;flex-direction:column;}
+    .legend-empty{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.06em;padding:8px 0;opacity:.45;font-style:italic;}
+    .legend-group{overflow:hidden;transition:max-height .3s ease,opacity .25s;max-height:0;opacity:0;}
+    .legend-group.visible{max-height:200px;opacity:1;}
+    .legend-group-hd{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:6px 0 3px;border-top:1px solid var(--border);display:flex;align-items:center;gap:5px;}
+    .legend-item{display:flex;align-items:center;gap:6px;padding:2px 0 2px 6px;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.04em;transition:opacity .25s;color:var(--body);}
+    .legend-item.zoom-dim{opacity:.3;color:var(--muted);}
+    .legend-swatch{width:18px;height:3px;border-radius:1px;flex-shrink:0;}
+    .legend-poly{width:13px;height:10px;border-radius:2px;border:1.5px solid;flex-shrink:0;}
+    .legend-zoom-tag{font-size:7px;margin-left:auto;letter-spacing:.04em;color:var(--accent);opacity:.7;white-space:nowrap;}
+    /* disclaimer */
+    .map-disclaimer{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.05em;line-height:1.5;padding:8px 14px;border-bottom:1px solid var(--border);background:rgba(240,160,96,.04);flex-shrink:0;}
+    .map-disclaimer span{color:var(--accent2);}
+    /* zoom toast floats over map */
+    .zoom-toast{position:absolute;bottom:12px;left:12px;z-index:500;display:flex;flex-direction:column;gap:4px;pointer-events:none;}
+    .zoom-toast-item{background:rgba(12,10,8,.92);border:1px solid;border-radius:4px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.06em;display:flex;align-items:center;gap:7px;backdrop-filter:blur(4px);transition:opacity .3s,transform .3s;opacity:0;transform:translateY(6px);}
+    .zoom-toast-item.show{opacity:1;transform:none;}
+    .zoom-toast-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+    .zoom-toast-msg{color:var(--body);}
+    .zoom-toast-zoom{font-size:8px;color:var(--muted);margin-left:2px;}
+
+    /* ── OUTCOME ── */
+    .decision-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:28px;}
+    .decision-card{background:var(--surface);padding:24px 20px;}
+    .dc-type{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;}
+    .dc-items{display:flex;flex-direction:column;gap:7px;}
+    .dc-item{font-size:13px;color:var(--body);line-height:1.6;padding-left:12px;position:relative;}
+    .dc-item::before{content:'→';position:absolute;left:0;color:var(--accent);opacity:.5;font-size:11px;}
+    .dc-item strong{color:var(--text);font-weight:500;}
+
+    /* CASE NAV */
+    .case-nav{display:flex;justify-content:space-between;padding:48px 0;border-top:1px solid var(--border);}
+    .case-nav a{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:.08em;transition:color .2s;}
+    .case-nav a:hover{color:var(--accent);}
+
+    /* REVEAL */
+    .reveal{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease;}
+    .reveal.visible{opacity:1;transform:none;}
+
     @media(max-width:768px){
-      .project-map-section { padding: 0 24px 0; }
-      .project-map-container { height: 260px; }
+      nav,.page{padding-left:24px;padding-right:24px;}
+      .hero{padding:90px 0 40px;}
+      .metrics{grid-template-columns:1fr 1fr;}
+      .tax-themes{grid-template-columns:1fr 1fr;}
+      .map-outer{grid-template-columns:1fr;}
+      .map-sidebar{border-left:none;border-top:1px solid var(--border);flex-direction:row;flex-wrap:wrap;}
+      #bc-map{height:300px;}
+      .decision-grid{grid-template-columns:1fr;}
     }
   </style>
 </head>
 <body>
-  <nav>
-    <a href="index.html" class="nav-logo">cy.gis</a>
-    <a href="index.html" class="nav-back">← All Projects</a>
-  </nav>
 
-  <div class="case-hero">
-    <div class="case-number">Project 03</div>
-    <h1 class="case-title">Bioregional Atlas<br><span>Map Series</span></h1>
-    <p class="case-summary">
-      Producing a multi-theme printed map atlas to support Indigenous consultation processes
-      and executive-level regional planning — translating complex environmental datasets
-      into clear, decision-ready cartographic outputs.
+<nav>
+  <a href="index.html" class="nav-logo">yang<span>.spatial</span></a>
+  <a href="index.html" class="nav-back">← All Projects</a>
+</nav>
+
+<div class="page">
+
+  <!-- ══ HERO ══ -->
+  <div class="hero reveal">
+    <div class="hero-eyebrow"><span>03</span>Bioregional Atlas · Multi-Theme Map Series</div>
+    <h1>Bioregional<br><em>Atlas</em></h1>
+    <div class="hero-system-line">Spatial Intelligence System · BC Bioregion</div>
+    <p class="hero-summary">
+      A multi-theme spatial intelligence atlas integrating environmental, cultural, and economic
+      datasets across multiple regions — built on a structured data library, automated cartographic
+      production, and LiDAR-derived terrain analysis. Designed to support site-level and regional
+      decision-making where spatial context determines what options are even available.
     </p>
-    <div class="case-meta">
-      <div class="meta-item"><span class="meta-label">Domain</span><span class="meta-value">Environmental Planning</span></div>
-      <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Printed Atlas</span></div>
-      <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">GIS Specialist</span></div>
-      <div class="meta-item"><span class="meta-label">Region</span><span class="meta-value">Coastal BC</span></div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-val">20+</div><div class="metric-label">Study Sites</div></div>
+      <div class="metric"><div class="metric-val">15+</div><div class="metric-label">Map Themes</div></div>
+      <div class="metric"><div class="metric-val">40+</div><div class="metric-label">Spatial Layers</div></div>
+      <div class="metric"><div class="metric-val">6</div><div class="metric-label">Theme Groups</div></div>
     </div>
   </div>
 
+  <div style="height:1px;background:var(--border);"></div>
 
-  <!-- PROJECT MAP -->
-  <div class="project-map-section">
-    <div class="map-label">Spatial Context <span>// Study Area Overview</span></div>
-    <div class="project-map-container" id="map-atlas"></div>
+  <!-- ══ 01 CONTEXT ══ -->
+  <div class="section reveal">
+    <div class="sec-tag"><span>01</span>Context</div>
+    <div class="sec-capability">Capability demonstrated → Problem framing &amp; spatial systems thinking</div>
+    <h2>What problem does this solve?</h2>
+    <div class="sec-body">
+      <p>Land-use planning, environmental review, and resource management decisions in BC depend on the ability to <strong>compare multiple sites across multiple dimensions simultaneously</strong> — terrain, ecology, resources, planning overlays, cultural context. Without a structured spatial system, that comparison is slow, inconsistent, and hard to defend.</p>
+      <p>This atlas was built to answer a specific organizational need: produce a <strong>consistent, replicable, multi-theme spatial reference</strong> for a large set of study sites — one that could be updated, extended, and queried without rebuilding the workflow each time.</p>
+    </div>
+    <div class="callout">
+      <strong>Scale of the work</strong>
+      <p>20+ sites × 15+ themes means 300+ individual map products, all derived from the same data library and layout logic. That scale is only achievable through systems design — not manual cartography.</p>
+    </div>
+
+    <!-- MAP SERIES GRID -->
+    <div class="vis-wrap" style="margin-top:28px;">
+      <div class="vis-label">Atlas Structure — Sites × Themes <span>// hover a tile for detail</span></div>
+      <div class="grid-wrap">
+        <div class="grid-hint">Each column = one map theme · Each row = one study site · Colour = data availability</div>
+        <div id="series-grid"></div>
+        <div class="sg-legend">
+          <div class="sg-legend-item"><div class="sg-legend-swatch avail-rich" style="border-color:rgba(109,191,138,.6)"></div>Rich — full coverage</div>
+          <div class="sg-legend-item"><div class="sg-legend-swatch avail-partial" style="border-color:rgba(240,160,96,.5)"></div>Partial — most layers</div>
+          <div class="sg-legend-item"><div class="sg-legend-swatch avail-limited" style="border-color:rgba(232,93,58,.4)"></div>Limited — key layers only</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="case-content">
-
-    <div class="phase">
-      <div class="phase-label-col"><div class="phase-num">00</div><div class="phase-name">Context</div></div>
-      <div class="phase-body">
-        <p>Regional planning in BC often requires spatially grounded consultation materials —
-        documents that communicate land, resource, and ecosystem information clearly to both technical
-        reviewers and non-GIS audiences including <strong>Indigenous rights holders</strong> and executive decision-makers.</p>
-        <p>This project called for a comprehensive <strong>bioregional atlas</strong> covering a coastal BC
-        study area — a structured series of thematic maps addressing ecological, cultural, and land-use
-        dimensions of the region in a consistent, print-ready format.</p>
-      </div>
+  <!-- ══ 02 DATA ARCHITECTURE ══ -->
+  <div class="section reveal">
+    <div class="sec-tag"><span>02</span>Data Architecture</div>
+    <div class="sec-capability">Capability demonstrated → Understanding of BC's spatial data ecosystem</div>
+    <h2>Organizing the data library</h2>
+    <div class="sec-body">
+      <p>Before any maps could be produced, the underlying data needed a <strong>coherent, maintainable organizational structure</strong>. Datasets from BC Data Catalogue, TANTALIS, federal sources, and field surveys were catalogued into a thematic data library — the single source of truth for all atlas products.</p>
+      <p>This taxonomy did more than organize files. It defined the atlas structure, drove the cartographic template logic, and made it possible to add a new site or update a dataset without touching the rest of the system.</p>
     </div>
 
-    <div class="phase">
-      <div class="phase-label-col"><div class="phase-num">01</div><div class="phase-name">Problem</div></div>
-      <div class="phase-body">
-        <p>Source datasets — watershed boundaries, ecological units, land tenure, resource tenures,
-        cultural areas — came from multiple provincial and federal sources with inconsistent projections,
-        symbology, and attribute schemas.</p>
-        <div class="callout">
-          <strong>Core challenge</strong>
-          Producing a coherent atlas from fragmented source data required both technical data harmonization
-          and a deliberate cartographic design system — so every map in the series felt like part of the
-          same document, not a collection of unrelated exports.
-        </div>
-        <p>The maps needed to serve two distinct audiences simultaneously: technical reviewers who needed
-        spatial precision, and community and executive stakeholders who needed clarity and legibility above all.</p>
-      </div>
+    <div class="vis-wrap">
+      <div class="vis-label">Data Taxonomy <span>// click any theme group to expand layers</span></div>
+      <div class="tax-root">Bioregional Atlas — Data Library</div>
+      <div class="tax-themes" id="taxonomy"></div>
     </div>
-
-    <div class="phase">
-      <div class="phase-label-col"><div class="phase-num">02</div><div class="phase-name">Approach</div></div>
-      <div class="phase-body">
-        <p>Data from provincial, federal, and project-specific sources was consolidated and standardized
-        into a <strong>single geodatabase</strong> with consistent projections and attributed fields,
-        clipped to a common study area boundary.</p>
-        <p>A <strong>map series template</strong> was designed in ArcGIS Pro — establishing a shared page
-        layout, coordinate system, scale bar standards, legend formatting, and typography carried across
-        all themes. The <strong>ArcGIS Pro Map Series</strong> feature drove each page automatically from
-        spatial bookmarks and dynamic text — making updates and extensions fast.</p>
-        <p>A <strong>netdown assessment workflow</strong> was also developed — systematically identifying
-        overlapping land interests and tenure conflicts across the study area in a reproducible,
-        auditable format to support the consultation process.</p>
-        <div class="tech-stack">
-          <span class="tech-pill">ArcGIS Pro</span>
-          <span class="tech-pill">Map Series</span>
-          <span class="tech-pill">Spatial Bookmarks</span>
-          <span class="tech-pill">Cartographic Design</span>
-          <span class="tech-pill">Netdown Analysis</span>
-          <span class="tech-pill">BC Data Catalogue</span>
-          <span class="tech-pill">Geodatabase Design</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="phase">
-      <div class="phase-label-col"><div class="phase-num">03</div><div class="phase-name">Outcome</div></div>
-      <div class="phase-body">
-        <div class="outcome-stats">
-          <div class="outcome-stat"><div class="outcome-value">Multi</div><div class="outcome-label">Theme map series delivered</div></div>
-          <div class="outcome-stat"><div class="outcome-value">2x</div><div class="outcome-label">Audiences — technical &amp; exec</div></div>
-          <div class="outcome-stat"><div class="outcome-value">↻</div><div class="outcome-label">Updateable template system</div></div>
-        </div>
-        <p>The completed atlas served as the primary spatial reference document throughout the regional
-        planning and consultation process — used in meetings, submitted with technical reports, and
-        referenced by decision-makers at the executive level.</p>
-        <div class="callout">
-          <strong>Design system value</strong>
-          Because the atlas was built on a parametric template, adding new themes or updating existing
-          ones took a fraction of the time compared to a traditional map production workflow.
-        </div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- ══ 03 WORKFLOW ══ -->
+  <div class="section reveal">
+    <div class="sec-tag"><span>03</span>Workflow</div>
+    <div class="sec-capability">Capability demonstrated → GIS production pipeline design</div>
+    <h2>End-to-end production system</h2>
+    <div class="sec-body">
+      <p>The atlas was built on a <strong>reproducible pipeline</strong> — from raw data ingestion to exported map products. ArcGIS Pro Map Series (Data Driven Pages) drove cartographic output: once the template and symbology were set, the same layout generated maps for every site automatically.</p>
+      <p>Python scripting handled batch processing, projection management, and geodatabase operations. The pipeline was designed so that adding a new site required only updating the data library — not rebuilding the workflow.</p>
+    </div>
+    <div class="tech-stack">
+      <span class="tech-pill">ArcGIS Pro</span>
+      <span class="tech-pill">Map Series / Data Driven Pages</span>
+      <span class="tech-pill">Python / ArcPy</span>
+      <span class="tech-pill">R / lidR</span>
+      <span class="tech-pill">BC Data Catalogue</span>
+      <span class="tech-pill">TANTALIS</span>
+    </div>
+    <div class="vis-wrap">
+      <div class="vis-label">Production Pipeline <span>// end-to-end</span></div>
+      <div class="pipeline-wrap">
+        <div class="pipeline" id="pipeline"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 04 LIDAR AUTOMATION ══ -->
+  <div class="section reveal">
+    <div class="sec-tag"><span>04</span>LiDAR Automation</div>
+    <div class="sec-capability">Capability demonstrated → Computational GIS &amp; automated terrain analysis</div>
+    <h2>Automating the hydrology theme</h2>
+    <div class="sec-body">
+      <p>The hydrology and terrain theme required surface-derived products (DTM, DSM, CHM, slope, aspect, hillshade) and hydrological analysis outputs (stream networks, watersheds, pour points) — all generated from raw LiDAR point clouds.</p>
+      <p>An <strong>R script using <code style="font-family:'DM Mono',monospace;color:var(--accent2)">lidR</code></strong> handled point cloud normalization and surface derivation. A <strong>Python script</strong> ran hydrological analysis and fed results into a <code style="font-family:'DM Mono',monospace;color:var(--accent2)">folium</code> map for inline QA visualization — so outputs could be verified without opening GIS software between runs.</p>
+    </div>
+    <div class="callout">
+      <strong>Why this matters at scale</strong>
+      <p>Manual terrain and hydrology analysis for 20+ sites would have taken weeks. Automating the pipeline reduced per-site processing to a single script execution — and the embedded visual QA caught classification errors before they propagated into the atlas.</p>
+    </div>
+    <div class="vis-wrap" style="margin-top:28px;">
+      <div class="vis-label">LiDAR → Hydrology Pipeline <span>// click any stage to expand functions</span></div>
+      <div class="lidar-wrap">
+        <div class="lidar-stages" id="lidar-stages"></div>
+        <div class="lidar-hint">click a stage to expand ↑</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 05 BC DATA MAP ══ -->
+  <div class="section reveal">
+    <div class="sec-tag"><span>05</span>Data in Context</div>
+    <div class="sec-capability">Capability demonstrated → Cartographic judgment &amp; BC data ecosystem literacy</div>
+    <h2>BC open data — atlas layer groups</h2>
+    <div class="sec-body">
+      <p>The atlas drew from BC's provincial spatial data infrastructure — datasets organized by the same theme groups used in the atlas. The map below shows <strong>live BC government open data</strong> via WMS, grouped and toggled by atlas theme.</p>
+      <p>The actual study area is confidential. Use the location controls to explore the same layer structure applied to any BC area of interest.</p>
+    </div>
+
+    <div class="vis-wrap">
+      <div class="vis-label">BC Open Data — Atlas Layer Groups <span>// live WMS · openmaps.gov.bc.ca</span></div>
+      <div class="map-outer">
+        <!-- MAP CANVAS -->
+        <div class="map-canvas-col">
+          <div id="bc-map"></div>
+          <div class="zoom-toast" id="zoom-toast"></div>
+        </div>
+        <!-- SIDEBAR -->
+        <div class="map-sidebar">
+          <div class="map-disclaimer">
+            <span>Note:</span> Study area confidential. Explore any BC region — same layers, different place.
+          </div>
+          <div class="map-sidebar-scroll">
+            <div class="map-sidebar-section">
+              <div class="map-sidebar-title">View</div>
+              <div class="map-view-btns">
+                <button class="map-view-btn active" onclick="setView('province')">BC Overview</button>
+                <button class="map-view-btn" onclick="setView('study')">Study Scale</button>
+              </div>
+              <div class="loc-controls">
+                <button class="loc-btn" onclick="useGeolocation()"><span class="lb-icon">📍</span>My location</button>
+                <button class="loc-btn" onclick="showRegionPicker()"><span class="lb-icon">🗺</span>Pick a region</button>
+                <button class="loc-btn" onclick="randomLocation()"><span class="lb-icon">🎲</span>Random BC area</button>
+              </div>
+              <div class="loc-status" id="loc-status"></div>
+              <div id="region-picker" style="display:none;margin-top:6px;">
+                <select id="region-select" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:9px;padding:5px 8px;border-radius:3px;cursor:pointer;">
+                  <option value="">— pick a region —</option>
+                  <option value="54.0,-125.5,8">Central Coast</option>
+                  <option value="54.5,-128.6,8">North Coast / Skeena</option>
+                  <option value="53.9,-122.7,8">Prince George area</option>
+                  <option value="50.1,-122.9,9">Sea-to-Sky / Pemberton</option>
+                  <option value="49.9,-119.5,9">Okanagan</option>
+                  <option value="55.8,-120.0,8">Peace River / Fort St John</option>
+                  <option value="58.8,-122.7,8">Fort Nelson / Liard</option>
+                  <option value="51.6,-116.5,9">Kootenay / Columbia</option>
+                </select>
+              </div>
+            </div>
+            <div class="map-sidebar-section">
+              <div class="map-sidebar-title">Theme Layers</div>
+              <div class="layer-list" id="layer-list"></div>
+            </div>
+            <div class="map-sidebar-section" style="border-bottom:none;">
+              <div class="map-sidebar-title">Legend</div>
+              <div class="map-legend-wrap" id="map-legend-wrap">
+                <div class="legend-empty" id="legend-empty">Turn on a layer to see legend</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 06 OUTCOME ══ -->
+  <div class="section reveal">
+    <div class="sec-tag"><span>06</span>Outcome</div>
+    <div class="sec-capability">Capability demonstrated → Delivering measurable decision support value</div>
+    <h2>What this system enabled</h2>
+    <div class="sec-body">
+      <p>A scalable spatial intelligence framework for bioregional analysis — one that converts raw provincial and field data into <strong>structured, decision-ready spatial context</strong>. The value is not in the maps themselves, but in what they make possible: faster site comparison, more consistent spatial evidence, and a reusable production system that scales without linear effort growth.</p>
+    </div>
+    <div class="decision-grid">
+      <div class="decision-card">
+        <div class="dc-type">Information Products</div>
+        <div class="dc-items">
+          <div class="dc-item">Consistent <strong>thematic map series</strong> for every site</div>
+          <div class="dc-item">Multi-theme <strong>spatial synthesis</strong> per region</div>
+          <div class="dc-item">LiDAR-derived <strong>terrain &amp; hydrology layers</strong></div>
+        </div>
+      </div>
+      <div class="decision-card">
+        <div class="dc-type">Analytical Capability</div>
+        <div class="dc-items">
+          <div class="dc-item">Cross-site <strong>comparison at consistent scale</strong></div>
+          <div class="dc-item">Resource &amp; planning <strong>constraint mapping</strong></div>
+          <div class="dc-item">Terrain context from <strong>automated LiDAR analysis</strong></div>
+        </div>
+      </div>
+      <div class="decision-card">
+        <div class="dc-type">Operational Impact</div>
+        <div class="dc-items">
+          <div class="dc-item">Reduced map production from <strong>weeks to hours</strong></div>
+          <div class="dc-item">New sites added <strong>without rebuilding workflow</strong></div>
+          <div class="dc-item">Spatial evidence ready for <strong>planning &amp; review processes</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="case-nav">
-    <a href="airport-ols.html">← Airport OLS & Hazard Tree</a>
-    <a href="hydro-terrain.html">Terrain & Hydrology →</a>
+    <a href="airport-ols.html">← Airport OLS</a>
+    <a href="hydro-terrain.html">Terrain &amp; Hydrology →</a>
   </div>
 
-  <script>
-  (function(){
-    var m = L.map('map-atlas', { zoomControl: false, attributionControl: false, scrollWheelZoom: false });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      { maxZoom: 19, subdomains: 'abcd' }).addTo(m);
-    m.setView([51.5, -127.0], 8);
+</div><!-- /page -->
 
-    var base = { fillOpacity: 0.13, weight: 1.5 };
+<script>
+/* ════════════════════════════════════════
+   DATA
+════════════════════════════════════════ */
+var THEMES = [
+  {col:'#5b9bd5', label:'Physical\nGeog.',   short:'Physical'},
+  {col:'#6dbf8a', label:'Natural\nEnv.',     short:'Natural Env.'},
+  {col:'#e85d3a', label:'Resources',         short:'Resources'},
+  {col:'#c8a87a', label:'Cultural',          short:'Cultural'},
+  {col:'#9b8fc4', label:'Infrastr.',         short:'Infra.'},
+  {col:'#f0a060', label:'Area\nDesig.',      short:'Designations'},
+];
+// Per-site availability per theme: 0=limited 1=partial 2=rich
+// 3 sample sites shown; rest implied
+var SITE_DATA = [
+  {label:'Site A', avail:[2,2,2,1,1,2]},
+  {label:'Site B', avail:[2,2,1,2,1,2]},
+  {label:'Site C', avail:[2,1,2,1,0,1]},
+];
+var AVAIL_META = [
+  {cls:'avail-limited', label:'Limited',  tip:'Key layers only — some themes incomplete'},
+  {cls:'avail-partial', label:'Partial',  tip:'Most layers available, minor gaps'},
+  {cls:'avail-rich',    label:'Rich',     tip:'Full theme coverage — all layers available'},
+];
 
-    // Bioregion boundary
-    L.polygon([
-      [52.8,-128.5],[53.0,-126.0],[52.5,-124.5],[51.0,-124.8],[50.5,-126.5],[51.2,-128.8]
-    ], Object.assign({}, base, { color:'#e85d3a', fillColor:'#e85d3a', weight:2 }))
-      .addTo(m).bindPopup('<b>Bioregional Study Area</b><br>Atlas coverage boundary');
+var TAX_DATA = [
+  {icon:'⛰️', name:'Physical Geography', col:'#5b9bd5', layers:[
+    {n:'Watershed Boundaries',  src:'BC Data Cat.'},
+    {n:'Digital Elevation Model (DTM/DSM)', src:'LiDAR'},
+    {n:'Terrain Slope & Aspect', src:'LiDAR derived'},
+    {n:'Watercourses / Rivers',  src:'FWA'},
+    {n:'Bedrock Geology',        src:'BC Data Cat.'},
+  ]},
+  {icon:'🌿', name:'Natural Environment', col:'#6dbf8a', layers:[
+    {n:'BEC Zones (Biogeoclimatic)', src:'BC Data Cat.'},
+    {n:'Old Growth Management Areas', src:'BC Data Cat.'},
+    {n:'Riparian Setback Areas', src:'FWA'},
+    {n:'Wildlife Habitat Polygons', src:'BC Data Cat.'},
+    {n:'Species at Risk Occurrences', src:'Federal/Prov.'},
+  ]},
+  {icon:'🪵', name:'Natural Resources', col:'#e85d3a', layers:[
+    {n:'Timber Supply Areas (TSA)', src:'FADM'},
+    {n:'Mineral & Placer Tenures', src:'TANTALIS'},
+    {n:'Water Licences / Approvals', src:'TANTALIS'},
+    {n:'Fish Habitat Streams', src:'FWA/DFO'},
+    {n:'Crown Land Disposition', src:'TANTALIS'},
+  ]},
+  {icon:'🏛️', name:'Cultural & Heritage', col:'#c8a87a', layers:[
+    {n:'First Nations Reserves', src:'CLAB'},
+    {n:'Treaty & Traditional Territory', src:'BCTR'},
+    {n:'Heritage Sites (Registered)', src:'BC Data Cat.'},
+    {n:'TANTALIS Crown Tenures', src:'TANTALIS'},
+  ]},
+  {icon:'🏗️', name:'Infrastructure', col:'#9b8fc4', layers:[
+    {n:'Digital Road Atlas (DRA)', src:'BC Data Cat.'},
+    {n:'Transmission Lines', src:'BC Data Cat.'},
+    {n:'Industrial Facility Footprints', src:'BC Data Cat.'},
+    {n:'Communication Infrastructure', src:'BC Data Cat.'},
+  ]},
+  {icon:'📋', name:'Area Designations', col:'#f0a060', layers:[
+    {n:'Protected Areas & Parks', src:'TANTALIS'},
+    {n:'Agricultural Land Reserve (ALR)', src:'ALC'},
+    {n:'Resource Management Zones', src:'BC Data Cat.'},
+    {n:'Old Growth Deferral Areas', src:'BC Data Cat.'},
+  ]},
+];
 
-    // Watershed sub-units
-    [
-      [[52.5,-127.8],[52.7,-126.5],[52.2,-126.2],[52.0,-127.5]],
-      [[51.8,-127.2],[52.0,-126.0],[51.5,-125.8],[51.3,-127.0]],
-      [[52.2,-128.2],[52.5,-127.0],[52.0,-126.8],[51.8,-128.0]],
-    ].forEach(function(coords, i){
-      L.polygon(coords, Object.assign({}, base, {
-        color: '#5b9bd5', fillColor: '#5b9bd5', fillOpacity: 0.15 + i*0.04
-      })).addTo(m).bindPopup('<b>Watershed Sub-Unit ' + (i+1) + '</b><br>Hydrological boundary');
+var PIPELINE_STAGES = [
+  {icon:'🗄️', name:'Data Sources',  sub:'BC Data Cat.\nTANTALIS · FWA\nLiDAR'},
+  {icon:'📚', name:'Data Library',  sub:'Thematic org.\nVersioning\nMetadata'},
+  {icon:'⚙️', name:'Processing',   sub:'Reproject\nClip to AOI\nQA / QC'},
+  {icon:'🔬', name:'Analysis',      sub:'Terrain derivation\nHydrology\nOverlay'},
+  {icon:'🎨', name:'Cartography',   sub:'Symbology\nLayout template\nMap Series'},
+  {icon:'📦', name:'Output',        sub:'PDF export\nData delivery\nAtlas package'},
+];
+
+var LIDAR_STAGES = [
+  {name:'Point Cloud Ingestion',             tool:'R / lidR',
+   fns:['readLAS()', 'las_check()', 'filter_duplicates()', 'classify_noise()']},
+  {name:'Ground Classification',             tool:'R / lidR',
+   fns:['classify_ground() <em>[CSF]</em>', 'writeLAS()', 'plot()']},
+  {name:'Surface Derivation',               tool:'R / lidR',
+   fns:['normalize_height()', 'rasterize_terrain() <em>→ DTM</em>', 'rasterize_canopy() <em>→ DSM · CHM</em>', 'pixel_metrics() <em>→ slope · aspect · hillshade</em>']},
+  {name:'Hydrological Analysis',            tool:'Python',
+   fns:['fill_depressions()', 'd8_flow_accumulation()', 'extract_streams()', 'snap_pour_points()', 'watershed()']},
+  {name:'QA Visualization',                 tool:'Python / Folium',
+   fns:['folium.Map()', 'GeoJson() <em>— stream overlay</em>', 'GeoJson() <em>— basin overlay</em>', 'map.save() <em>→ inline HTML QA</em>']},
+  {name:'Atlas Integration',                tool:'ArcGIS Pro / ArcPy',
+   fns:['RasterToGeodatabase()', 'Map Series refresh', 'arcpy.mp.ExportToPDF()']},
+];
+
+/* ════════════════════════════════════════
+   1. MAP SERIES GRID
+════════════════════════════════════════ */
+(function(){
+  var COLS = THEMES.length;
+  var grid = document.getElementById('series-grid');
+  grid.style.cssText = 'display:grid;grid-template-columns:54px repeat('+COLS+',1fr);gap:3px;';
+
+  // Header
+  var empty = document.createElement('div');
+  grid.appendChild(empty);
+  THEMES.forEach(function(t){
+    var h = document.createElement('div');
+    h.className='sg-col-head';
+    h.style.color = t.col;
+    h.textContent = t.short;
+    grid.appendChild(h);
+  });
+
+  // Site rows
+  SITE_DATA.forEach(function(site){
+    var lbl = document.createElement('div');
+    lbl.className='sg-row-label';
+    lbl.textContent = site.label;
+    grid.appendChild(lbl);
+    site.avail.forEach(function(a, ci){
+      var meta = AVAIL_META[a];
+      var tile = document.createElement('div');
+      tile.className='sg-tile '+meta.cls;
+      var icon = a===2?'●':a===1?'◐':'○';
+      tile.innerHTML='<span class="avail-icon" style="color:'+THEMES[ci].col+';opacity:'+(a===2?0.9:a===1?0.65:0.35)+'">'+icon+'</span><div class="sg-tooltip">'+site.label+' · '+THEMES[ci].short+'<br>'+meta.label+' — '+meta.tip+'</div>';
+      grid.appendChild(tile);
     });
+  });
 
-    // Resource tenure areas
-    [
-      [[52.0,-127.5],[52.2,-126.8],[51.9,-126.6],[51.7,-127.3]],
-      [[51.4,-126.5],[51.6,-125.8],[51.2,-125.6],[51.0,-126.2]],
-    ].forEach(function(coords){
-      L.polygon(coords, Object.assign({}, base, {
-        color: '#f0a060', fillColor: '#f0a060', dashArray: '5,4'
-      })).addTo(m).bindPopup('<b>Resource Tenure Area</b><br>Netdown assessment layer');
+  // Ellipsis row
+  var el = document.createElement('div');
+  el.className='sg-row-label';
+  el.style.opacity='.35';
+  el.textContent='· · ·';
+  grid.appendChild(el);
+  for(var c=0;c<COLS;c++){
+    var dot=document.createElement('div');
+    dot.className='sg-tile';
+    dot.style.cssText='height:16px;border-color:var(--border);background:transparent;';
+    dot.innerHTML='<span style="font-size:8px;color:var(--border)">·</span>';
+    grid.appendChild(dot);
+  }
+
+  // "20+ sites" summary row
+  var sumLbl=document.createElement('div');
+  sumLbl.className='sg-row-label';
+  sumLbl.style.cssText='font-family:"DM Mono",monospace;font-size:8px;color:var(--accent);opacity:.6;';
+  sumLbl.textContent='20+ sites';
+  grid.appendChild(sumLbl);
+  for(var c=0;c<COLS;c++){
+    var t2=document.createElement('div');
+    t2.className='sg-tile';
+    t2.style.cssText='height:20px;border-color:rgba(232,93,58,.15);background:rgba(232,93,58,.04);';
+    grid.appendChild(t2);
+  }
+})();
+
+/* ════════════════════════════════════════
+   2. TAXONOMY
+════════════════════════════════════════ */
+(function(){
+  var container=document.getElementById('taxonomy');
+  TAX_DATA.forEach(function(t){
+    var card=document.createElement('div');
+    card.className='tax-theme';
+    card.innerHTML=
+      '<div class="tax-hd">'+
+        '<span class="tax-icon">'+t.icon+'</span>'+
+        '<span class="tax-name" style="color:'+t.col+'">'+t.name+'</span>'+
+        '<span class="tax-arrow">›</span>'+
+      '</div>'+
+      '<div class="tax-body">'+
+        t.layers.map(function(l){
+          return '<div class="tax-layer">'+l.n+'<span class="tax-source">'+l.src+'</span></div>';
+        }).join('')+
+      '</div>';
+    card.querySelector('.tax-hd').addEventListener('click',function(){card.classList.toggle('open');});
+    container.appendChild(card);
+  });
+})();
+
+/* ════════════════════════════════════════
+   3. PIPELINE
+════════════════════════════════════════ */
+(function(){
+  var container=document.getElementById('pipeline');
+  PIPELINE_STAGES.forEach(function(s,i){
+    var stage=document.createElement('div');
+    stage.className='pipe-stage';
+    stage.innerHTML=
+      '<div class="pipe-box">'+
+        '<span class="pipe-icon">'+s.icon+'</span>'+
+        '<span class="pipe-name">'+s.name+'</span>'+
+        '<span class="pipe-sub">'+s.sub.replace(/\n/g,'<br>')+'</span>'+
+      '</div>';
+    container.appendChild(stage);
+    if(i<PIPELINE_STAGES.length-1){
+      var a=document.createElement('div');
+      a.className='pipe-arrow'; a.textContent='→';
+      container.appendChild(a);
+    }
+  });
+})();
+
+/* ════════════════════════════════════════
+   4. LIDAR STAGES
+════════════════════════════════════════ */
+(function(){
+  var container=document.getElementById('lidar-stages');
+  LIDAR_STAGES.forEach(function(s,i){
+    var stage=document.createElement('div');
+    stage.className='lidar-stage';
+    stage.innerHTML=
+      '<div class="lidar-line"><div class="lidar-dot"></div><div class="lidar-connector"></div></div>'+
+      '<div class="lidar-card" id="lc'+i+'">'+
+        '<div class="lidar-card-hd">'+
+          '<span class="lidar-stage-name">'+s.name+'</span>'+
+          '<span class="lidar-stage-tool">'+s.tool+'</span>'+
+          '<span class="lidar-expand-icon">›</span>'+
+        '</div>'+
+        '<div class="lidar-detail"><div class="lidar-detail-inner">'+
+          s.fns.map(function(f){return '<span class="lidar-fn">'+f+'</span>';}).join('')+
+        '</div></div>'+
+      '</div>';
+    stage.querySelector('.lidar-card').addEventListener('click',function(){this.classList.toggle('open');});
+    container.appendChild(stage);
+  });
+})();
+
+/* ════════════════════════════════════════
+   5. BC DATA MAP
+════════════════════════════════════════ */
+(function(){
+  var WMS='https://openmaps.gov.bc.ca/geo/pub/wms';
+
+  var LAYER_GROUPS=[
+    {id:'physical', label:'Physical',       col:'#5b9bd5', minZoom:5,
+     layers:[
+       {name:'Watersheds', wms:'WHSE_BASEMAPPING.FWA_WATERSHED_GROUPS_POLY', type:'poly'},
+       {name:'Rivers',     wms:'WHSE_BASEMAPPING.FWA_RIVERS_POLY',           type:'poly'},
+     ]},
+    {id:'natural',  label:'Natural Env.',   col:'#6dbf8a', minZoom:6,
+     layers:[
+       {name:'BEC Zones',  wms:'WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY',           type:'poly'},
+       {name:'Old Growth', wms:'WHSE_FOREST_VEGETATION.OGSR_TAP_PRIORITY_DEF_AREA_SP',     type:'poly'},
+     ]},
+    {id:'resources',label:'Resources',      col:'#e85d3a', minZoom:6,
+     layers:[
+       {name:'TSA Boundaries', wms:'WHSE_ADMIN_BOUNDARIES.FADM_TSA',              type:'poly'},
+       {name:'Mineral Tenure', wms:'WHSE_MINERAL_TENURE.MTA_ACQUIRED_TENURE_SVW', type:'poly'},
+     ]},
+    {id:'cultural', label:'Cultural',       col:'#c8a87a', minZoom:7,
+     layers:[
+       {name:'First Nations Reserves', wms:'WHSE_ADMIN_BOUNDARIES.CLAB_INDIAN_RESERVES', type:'poly'},
+       {name:'TANTALIS Crown Land',    wms:'WHSE_TANTALIS.TA_CROWN_LEASES_SVW',           type:'poly'},
+     ]},
+    {id:'infra',    label:'Infrastructure', col:'#9b8fc4', minZoom:9,
+     layers:[
+       {name:'Roads',        wms:'WHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP',             type:'line'},
+       {name:'Transmission', wms:'WHSE_IMAGERY_AND_BASE_MAPS.TRIM_EBM_ELEC_TRANSMISSION_L',  type:'line'},
+     ]},
+    {id:'desig',    label:'Designations',   col:'#f0a060', minZoom:6,
+     layers:[
+       {name:'Protected Areas', wms:'WHSE_TANTALIS.TA_PARK_ECORES_PA_SVW',        type:'poly'},
+       {name:'ALR',             wms:'WHSE_LEGAL_ADMIN_BOUNDARIES.OATS_ALR_POLYS', type:'poly'},
+     ]},
+  ];
+
+  var BC_REGIONS=[
+    [54.0,-125.5,8],[54.5,-128.6,8],[53.9,-122.7,8],
+    [50.1,-122.9,9],[49.9,-119.5,9],[55.8,-120.0,8],
+    [58.8,-122.7,8],[51.6,-116.5,9],[56.2,-120.3,8],
+    [48.8,-124.0,9],[50.7,-121.5,8],[52.1,-118.2,9],
+  ];
+
+  // Map init
+  var map=L.map('bc-map',{zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd'}).addTo(map);
+  map.setView([54.5,-124.5],5);
+
+  var activeGroups={};
+  var leafletLayers={};
+
+  // Build toggle buttons
+  var listEl=document.getElementById('layer-list');
+  LAYER_GROUPS.forEach(function(g){
+    activeGroups[g.id]=false;
+    var btn=document.createElement('button');
+    btn.className='layer-toggle';
+    btn.id='btn-'+g.id;
+    btn.innerHTML='<span class="l-dot" style="background:'+g.col+';border:1.5px solid '+g.col+'"></span>'+g.label;
+    btn.addEventListener('click',function(){toggleGroup(g.id);});
+    listEl.appendChild(btn);
+  });
+
+  // ── Dynamic legend ──
+  var legendWrap=document.getElementById('map-legend-wrap');
+  var legendEmpty=document.getElementById('legend-empty');
+  // Pre-build legend groups (hidden by default)
+  LAYER_GROUPS.forEach(function(g){
+    var grp=document.createElement('div');
+    grp.className='legend-group';
+    grp.id='leg-'+g.id;
+    var hd=document.createElement('div');
+    hd.className='legend-group-hd';
+    hd.style.color=g.col;
+    hd.innerHTML='<span class="l-swatch" style="background:'+g.col+'"></span>'+g.label;
+    grp.appendChild(hd);
+    g.layers.forEach(function(l){
+      var li=document.createElement('div');
+      li.className='legend-item';
+      li.id='leg-item-'+g.id+'-'+l.name.replace(/\s/g,'_');
+      var sym = l.type==='line'
+        ? '<div class="legend-swatch" style="background:'+g.col+'"></div>'
+        : '<div class="legend-poly" style="border-color:'+g.col+';background:'+g.col+'22"></div>';
+      li.innerHTML=sym+'<span>'+l.name+'</span><span class="legend-zoom-tag" id="leg-zoom-'+g.id+'_'+l.name.replace(/\s/g,'_')+'"></span>';
+      grp.appendChild(li);
     });
+    legendWrap.appendChild(grp);
+  });
 
-    // Cultural/consultation area
-    L.polygon([
-      [51.6,-128.0],[51.8,-127.0],[51.4,-126.8],[51.2,-127.8]
-    ], Object.assign({}, base, {
-      color: '#c084d4', fillColor: '#c084d4', fillOpacity: 0.1, dashArray: '3,6'
-    })).addTo(m).bindPopup('<b>Consultation Area</b><br>Indigenous planning boundary');
+  function refreshLegend(){
+    var zoom=map.getZoom();
+    var anyOn=false;
+    LAYER_GROUPS.forEach(function(g){
+      var grp=document.getElementById('leg-'+g.id);
+      if(!grp) return;
+      if(activeGroups[g.id]){
+        anyOn=true;
+        grp.classList.add('visible');
+        var needZoom=zoom<g.minZoom;
+        g.layers.forEach(function(l){
+          var li=document.getElementById('leg-item-'+g.id+'-'+l.name.replace(/\s/g,'_'));
+          var tag=document.getElementById('leg-zoom-'+g.id+'_'+l.name.replace(/\s/g,'_'));
+          if(!li) return;
+          if(needZoom){
+            li.classList.add('zoom-dim');
+            if(tag) tag.textContent='zoom '+g.minZoom+'+';
+          } else {
+            li.classList.remove('zoom-dim');
+            if(tag) tag.textContent='';
+          }
+        });
+      } else {
+        grp.classList.remove('visible');
+      }
+    });
+    legendEmpty.style.display=anyOn?'none':'block';
+  }
 
-    m.invalidateSize();
-  })();
-  </script>
+  // ── Zoom toast ──
+  var toastContainer=document.getElementById('zoom-toast');
 
+  function refreshToast(){
+    var zoom=map.getZoom();
+    toastContainer.innerHTML='';
+    LAYER_GROUPS.forEach(function(g){
+      if(activeGroups[g.id] && zoom<g.minZoom){
+        var item=document.createElement('div');
+        item.className='zoom-toast-item';
+        item.style.borderColor=g.col+'66';
+        item.innerHTML=
+          '<span class="zoom-toast-dot" style="background:'+g.col+'"></span>'+
+          '<span class="zoom-toast-msg">'+g.label+'</span>'+
+          '<span class="zoom-toast-zoom">needs zoom '+g.minZoom+'+ (now '+Math.round(zoom)+')</span>';
+        toastContainer.appendChild(item);
+        // Animate in
+        setTimeout(function(el){el.classList.add('show');}(item), 20);
+      }
+    });
+  }
+
+  map.on('zoomend', function(){
+    refreshLegend();
+    refreshToast();
+  });
+
+  function toggleGroup(id){
+    activeGroups[id]=!activeGroups[id];
+    document.getElementById('btn-'+id).classList.toggle('on',activeGroups[id]);
+    var grp=LAYER_GROUPS.find(function(g){return g.id===id;});
+    if(!grp) return;
+    if(activeGroups[id]){
+      grp.layers.forEach(function(l){
+        var key=id+'_'+l.name;
+        if(!leafletLayers[key]){
+          leafletLayers[key]=L.tileLayer.wms(WMS,{
+            layers:l.wms,format:'image/png',transparent:true,version:'1.1.1',opacity:0.72,
+          });
+        }
+        leafletLayers[key].addTo(map);
+      });
+    } else {
+      grp.layers.forEach(function(l){
+        var key=id+'_'+l.name;
+        if(leafletLayers[key]) map.removeLayer(leafletLayers[key]);
+      });
+    }
+    refreshLegend();
+    refreshToast();
+  }
+
+  // ── View controls ──
+  window.setView=function(v){
+    if(v==='province'){
+      map.flyTo([54.5,-124.5],5,{duration:1.2});
+    } else {
+      randomLocation();
+    }
+    document.querySelectorAll('.map-view-btn').forEach(function(b){
+      b.classList.toggle('active',b.getAttribute('onclick').includes("'"+v+"'"));
+    });
+  };
+
+  window.useGeolocation=function(){
+    setStatus('Requesting location…');
+    if(!navigator.geolocation){setStatus('Geolocation not available');return;}
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        var lat=pos.coords.latitude,lng=pos.coords.longitude;
+        if(lat>48&&lat<60&&lng>-140&&lng<-114){
+          map.flyTo([lat,lng],9,{duration:1.4});
+          setStatus('Zoomed to your location');
+          markStudyView();
+        } else {
+          setStatus('Outside BC — using random area');
+          randomLocation();
+        }
+      },
+      function(){setStatus('Location denied — try Pick or Random');}
+    );
+  };
+
+  window.showRegionPicker=function(){
+    var p=document.getElementById('region-picker');
+    p.style.display=p.style.display==='none'?'block':'none';
+    var sel=document.getElementById('region-select');
+    sel.onchange=function(){
+      if(!sel.value) return;
+      var parts=sel.value.split(',');
+      map.flyTo([parseFloat(parts[0]),parseFloat(parts[1])],parseInt(parts[2]),{duration:1.4});
+      setStatus(sel.options[sel.selectedIndex].text);
+      markStudyView();
+    };
+  };
+
+  window.randomLocation=function(){
+    var r=BC_REGIONS[Math.floor(Math.random()*BC_REGIONS.length)];
+    map.flyTo([r[0],r[1]],r[2],{duration:1.4});
+    setStatus('Random BC area');
+    markStudyView();
+  };
+
+  function markStudyView(){
+    document.querySelectorAll('.map-view-btn').forEach(function(b){
+      b.classList.toggle('active',b.getAttribute('onclick').includes("'study'"));
+    });
+  }
+  function setStatus(msg){document.getElementById('loc-status').textContent=msg;}
+
+  // Auto-load physical layer
+  setTimeout(function(){toggleGroup('physical');},600);
+})();
+
+/* ════════════════════════════════════════
+   SCROLL REVEAL
+════════════════════════════════════════ */
+(function(){
+  var els=document.querySelectorAll('.reveal');
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.06});
+  els.forEach(function(el){obs.observe(el);});
+})();
+</script>
 </body>
 </html>
