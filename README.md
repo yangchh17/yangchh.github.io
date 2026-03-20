@@ -1,6 +1,7 @@
 <a href="https://chhyang17.github.io/yangchh.github.io/" target="_blank">yangchh.com</a>
 
-# A Living GIS Portfolio (Under Development) — Chenghao Yang 
+# A Living GIS Portfolio — Chenghao Yang 
+# (Under Development) 
 
 A personal portfolio website showcasing geospatial projects, spatial data workflows, and GIS engineering work.
 
