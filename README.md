@@ -1,5 +1,3 @@
-<a href="https://yangchh17.github.io/yangchh.github.io/" target="_blank">yangchh.com</a>
-
 # A Living GIS Portfolio — Chenghao Yang 
 # (Under Development) 
 
