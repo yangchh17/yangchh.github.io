@@ -101,6 +101,7 @@ nav {
 }
 .mega-head:hover { color: var(--accent); }
 .mega-head + .mega-head { margin-top: 20px; }
+.mega-link + .mega-head { margin-top: 20px; }
 .mega-link {
   font-family: var(--mono); font-size: 10px; color: var(--text-3);
   letter-spacing: .08em; text-decoration: none; display: block;
@@ -471,10 +472,10 @@ footer {
           <a href="#stack" class="mega-head">Stack</a>
           <a href="#about" class="mega-head">About</a>
           <button class="mega-link" onclick="downloadCV(event)">Download CV &#8595;</button>
-        </div>
-        <div class="mega-col">
           <a href="#offpiste" class="mega-head">Off-piste</a>
           <a href="snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
+        </div>
+        <div class="mega-col">
           <a href="#contact" class="mega-head">Contact</a>
           <a href="mailto:yangchh@pm.me" class="mega-link">yangchh@pm.me</a>
           <a href="https://github.com/yangchh17" class="mega-link" target="_blank">GitHub</a>

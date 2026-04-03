@@ -98,6 +98,7 @@ nav {
 }
 .mega-head:hover { color: var(--accent); }
 .mega-head + .mega-head { margin-top: 20px; }
+.mega-link + .mega-head { margin-top: 20px; }
 .mega-link {
   font-family: var(--mono); font-size: 10px; color: var(--text-3);
   letter-spacing: .08em; text-decoration: none; display: block;
@@ -377,7 +378,7 @@ nav {
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0;
-      z-index: 100;
+      z-index: 1000;
       background: rgba(248,244,238,0.96);
       border-bottom: 1.5px solid var(--border);
       padding: 10px 18px;
