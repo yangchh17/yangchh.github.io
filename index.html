@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chenghao Yang — Spatial Systems & GIS</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+
+/* ─── TOKENS ─── */
+:root {
+  --bg:        #ffffff;
+  --bg-off:    #f8f4ee;
+  --bg-muted:  #f1ebe0;
+  --border:    #e8e0d4;
+  --border-m:  #d8cfc0;
+  --accent:    #d44820;
+  --accent-2:  #c8880a;
+  --text:      #18120a;
+  --text-2:    #4a3828;
+  --text-3:    #9a8878;
+  --mono: 'DM Mono', monospace;
+  --syne: 'Syne', sans-serif;
+  --sans: 'DM Sans', sans-serif;
+}
+
+/* ─── RESET ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 56px;
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--text); letter-spacing: .05em; text-decoration: none;
+  flex-shrink: 0;
+}
+.nav-logo span { color: var(--accent); }
+.nav-right { display: flex; align-items: center; gap: 0; }
+.nav-home {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .14em; text-transform: uppercase; text-decoration: none;
+  padding: 0 14px; height: 52px; display: flex; align-items: center;
+  transition: color .16s; border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+.nav-home:hover { color: var(--accent); }
+.nav-menu-trigger {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .14em; text-transform: uppercase;
+  padding: 0 16px; height: 52px; display: flex; align-items: center; gap: 6px;
+  cursor: pointer; background: none; border: none;
+  transition: color .16s; white-space: nowrap;
+}
+.nav-menu-trigger:hover { color: var(--accent); }
+.nav-chevron { font-size: 7px; display: inline-block; transition: transform .18s; }
+.nav-mega-item { position: static; }
+.nav-mega-item:hover .nav-chevron { transform: rotate(180deg); }
+.nav-mega-drop {
+  display: none;
+  position: fixed;
+  top: 52px; left: 0; right: 0;
+  background: var(--bg);
+  border-top: 2px solid var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding: 36px 56px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 48px;
+  z-index: 300;
+  box-shadow: 0 8px 32px rgba(0,0,0,.07);
+}
+.nav-mega-item:hover .nav-mega-drop { display: grid; }
+.mega-col { display: flex; flex-direction: column; }
+.mega-head {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--text); letter-spacing: .14em; text-transform: uppercase;
+  text-decoration: none; display: block;
+  padding-bottom: 10px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  transition: color .14s;
+}
+.mega-head:hover { color: var(--accent); }
+.mega-head + .mega-head { margin-top: 20px; }
+.mega-link {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .08em; text-decoration: none; display: block;
+  padding: 5px 0; transition: color .14s; cursor: pointer;
+  background: none; border: none; text-align: left; text-transform: none;
+}
+.mega-link:hover { color: var(--accent); }
+
+/* ─── HERO ─── */
+.hero {
+  position: relative; min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  overflow: hidden;
+}
+#hero-map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; filter: saturate(0.55) brightness(1.04) contrast(0.92); opacity: 0.7; }
+/* gradient: transparent top → white bottom so text is always readable */
+.hero-veil {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0)    0%,
+    rgba(255,255,255,.15) 48%,
+    rgba(255,255,255,.72) 68%,
+    rgba(255,255,255,.97) 88%,
+    rgba(255,255,255,1)   100%
+  );
+}
+.hero-content {
+  position: relative; z-index: 2;
+  padding: 0 56px 80px;
+  max-width: 900px;
+}
+.hero-eyebrow {
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
+  letter-spacing: .24em; text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-eyebrow::after {
+  content: ''; display: block;
+  width: 32px; height: 1px; background: var(--accent);
+}
+h1.hero-name {
+  font-family: var(--syne); font-weight: 800;
+  font-size: clamp(54px, 8.5vw, 110px);
+  line-height: .93; letter-spacing: -.03em;
+  color: var(--text); margin-bottom: 28px;
+}
+h1.hero-name em { color: var(--accent); font-style: normal; display: block; }
+.hero-desc {
+  font-family: var(--syne); font-weight: 400;
+  font-size: clamp(14px, 1.6vw, 18px);
+  color: var(--text-2); line-height: 1.7;
+  max-width: 520px; margin-bottom: 40px;
+  padding-left: 18px; border-left: 2px solid var(--accent);
+}
+.hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .14em; text-transform: uppercase;
+  padding: 10px 22px; text-decoration: none; cursor: pointer;
+  transition: all .16s; display: inline-block; border: none;
+}
+.btn-fill { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.btn-fill:hover { background: #b83612; border-color: #b83612; }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border-m); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─── SHARED SECTION STRUCTURE ─── */
+.section-rule { height: 1px; background: var(--border); }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 88px 56px; }
+.sec-eyebrow {
+  font-family: var(--mono); font-size: 9px; color: var(--accent);
+  letter-spacing: .26em; text-transform: uppercase; margin-bottom: 8px;
+}
+.sec-title {
+  font-family: var(--syne); font-size: clamp(26px, 3vw, 38px);
+  font-weight: 800; letter-spacing: -.02em; color: var(--text);
+  margin-bottom: 52px; line-height: 1.1;
+}
+
+/* ─── CASE STUDY SLIDER ─── */
+.slider-shell {
+  /* bleed past the section padding on the right so partial card peeks */
+  margin-right: -56px;
+  overflow: hidden;
+  position: relative;
+}
+.slider-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: scroll;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-right: 56px;
+  cursor: grab;
+  user-select: none;
+}
+.slider-track:active { cursor: grabbing; }
+.slider-track::-webkit-scrollbar { display: none; }
+
+.cs-card {
+  flex: 0 0 clamp(300px, 62vw, 660px);
+  scroll-snap-align: start;
+  background: var(--bg-off);
+  border: 1px solid var(--border);
+  padding: 40px 36px 36px;
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  transition: opacity .28s, border-color .28s;
+  position: relative; overflow: hidden;
+  opacity: .42;
+}
+.cs-card.is-active {
+  opacity: 1;
+  border-color: var(--border-m);
+}
+/* left accent bar only on active */
+.cs-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--accent); transform: scaleY(0);
+  transition: transform .28s ease; transform-origin: bottom;
+}
+.cs-card.is-active::before { transform: scaleY(1); }
+
+.cs-idx {
+  font-family: var(--mono); font-size: 9px; color: var(--text-3);
+  letter-spacing: .14em; margin-bottom: 18px;
+}
+.cs-title {
+  font-family: var(--syne); font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 700; color: var(--text); line-height: 1.2;
+  letter-spacing: -.01em; margin-bottom: 18px;
+}
+.cs-body {
+  font-size: 14px; color: var(--text-2); line-height: 1.85; flex: 1;
+}
+.cs-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-top: 28px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.cs-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.cs-tag {
+  font-family: var(--mono); font-size: 9px; padding: 3px 8px;
+  border: 1px solid var(--border); color: var(--text-3);
+  background: var(--bg);
+}
+.cs-link {
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
+  letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
+  transition: letter-spacing .16s;
+}
+.cs-card.is-active:hover .cs-link { letter-spacing: .16em; }
+
+/* controls row: dots + arrows */
+.slider-controls {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 24px; padding-right: 56px;
+}
+.slider-dots { display: flex; gap: 6px; align-items: center; }
+.dot {
+  width: 20px; height: 3px; background: var(--border-m);
+  transition: width .2s, background .2s; cursor: pointer;
+}
+.dot.is-active { background: var(--accent); width: 32px; }
+.slider-arrows { display: flex; gap: 6px; }
+.arrow-btn {
+  width: 36px; height: 36px;
+  background: var(--bg); border: 1px solid var(--border-m);
+  color: var(--text-2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: border-color .16s, color .16s;
+}
+.arrow-btn:hover { border-color: var(--accent); color: var(--accent); }
+.arrow-btn:disabled { opacity: .3; cursor: default; }
+.arrow-btn:disabled:hover { border-color: var(--border-m); color: var(--text-2); }
+
+/* ─── WHAT I WORK WITH ─── */
+.wiww-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--border);
+}
+.wiww-col {
+  padding: 32px 26px;
+  border-right: 1px solid var(--border);
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 12px;
+  transition: background .16s; position: relative; overflow: hidden;
+}
+.wiww-col:last-child { border-right: none; }
+.wiww-col:hover { background: var(--bg-off); }
+.wiww-col::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: var(--accent-2);
+  transform: scaleX(0); transition: transform .2s; transform-origin: left;
+}
+.wiww-col:hover::after { transform: scaleX(1); }
+.wiww-title {
+  font-family: var(--syne); font-size: 15px; font-weight: 700;
+  color: var(--text); line-height: 1.25;
+}
+.wiww-body { font-size: 13px; color: var(--text-2); line-height: 1.8; flex: 1; }
+.wiww-link {
+  font-family: var(--mono); font-size: 10px; color: var(--accent-2);
+  letter-spacing: .1em; text-transform: uppercase; margin-top: 4px;
+  transition: letter-spacing .16s;
+}
+.wiww-col:hover .wiww-link { letter-spacing: .15em; }
+
+/* ─── STACK ─── */
+.stack-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+}
+.stack-col {
+  padding: 28px 24px; border-right: 1px solid var(--border);
+}
+.stack-col:last-child { border-right: none; }
+.stack-col-name {
+  font-family: var(--mono); font-size: 9px; color: var(--accent);
+  letter-spacing: .22em; text-transform: uppercase;
+  margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+.stack-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.stack-list li {
+  font-size: 13px; color: var(--text-2);
+  display: flex; align-items: baseline; gap: 8px;
+}
+.stack-list li::before {
+  content: ''; display: block; width: 3px; height: 3px;
+  border-radius: 50%; background: var(--accent-2);
+  flex-shrink: 0; margin-top: 7px;
+}
+
+/* ─── ABOUT ─── */
+.about-grid {
+  display: grid; grid-template-columns: 3fr 2fr; gap: 72px; align-items: start;
+}
+.about-body p { font-size: 14px; color: var(--text-2); line-height: 1.9; margin-bottom: 18px; }
+.about-body p:last-of-type { margin-bottom: 0; }
+.about-body strong { color: var(--text); font-weight: 500; }
+.about-actions { margin-top: 28px; display: flex; gap: 10px; flex-wrap: wrap; }
+.about-stats { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); }
+.about-stat {
+  padding: 20px 16px; border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.about-stat:nth-child(2n) { border-right: none; }
+.about-stat:nth-last-child(-n+2) { border-bottom: none; }
+.stat-val { font-family: var(--syne); font-size: 24px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+.stat-lbl { font-family: var(--mono); font-size: 9px; color: var(--text-3); letter-spacing: .1em; text-transform: uppercase; line-height: 1.4; }
+
+/* ─── OFF-PISTE ─── */
+.offpiste-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--border);
+}
+.op-card {
+  padding: 32px 28px; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 10px;
+  border-right: 1px solid var(--border);
+  transition: background .16s;
+}
+.op-card:last-child { border-right: none; }
+.op-card:hover { background: var(--bg-off); }
+.op-sub { font-family: var(--mono); font-size: 9px; color: var(--text-3); letter-spacing: .2em; text-transform: uppercase; }
+.op-title { font-family: var(--syne); font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.op-body { font-size: 13px; color: var(--text-2); line-height: 1.75; flex: 1; }
+.op-cta { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+.op-pill { font-family: var(--mono); font-size: 9px; padding: 3px 10px; border: 1px solid var(--border); color: var(--text-3); display: inline-block; }
+
+/* ─── CONTACT ─── */
+.contact-inner {
+  display: flex; align-items: flex-end;
+  justify-content: space-between; gap: 40px; flex-wrap: wrap;
+}
+.contact-heading {
+  font-family: var(--syne); font-size: clamp(26px, 3.2vw, 40px);
+  font-weight: 800; color: var(--text); line-height: 1.1;
+}
+.contact-heading span { color: var(--accent); }
+.contact-links { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ─── FOOTER ─── */
+footer {
+  text-align: center; padding: 22px 56px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 9px; color: var(--text-3); letter-spacing: .08em;
+}
+
+/* ─── LEAFLET ─── */
+.leaflet-popup-content-wrapper {
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 2px; box-shadow: 0 6px 20px rgba(0,0,0,.08);
+}
+.leaflet-popup-tip { background: var(--bg); }
+.leaflet-popup-content { font-family: var(--sans); font-size: 12px; line-height: 1.6; padding: 8px 4px; }
+.leaflet-popup-content b { font-family: var(--syne); color: var(--accent); font-size: 13px; display: block; margin-bottom: 3px; }
+.leaflet-popup-content a { color: var(--accent); font-family: var(--mono); font-size: 10px; text-decoration: none; }
+.leaflet-container { background: var(--bg-off); }
+.leaflet-control-attribution { background: rgba(255,255,255,.8) !important; font-size: 9px !important; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1000px) {
+  .wiww-grid { grid-template-columns: 1fr 1fr; }
+  .wiww-col { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .wiww-col:nth-child(2n) { border-right: none; }
+  .stack-grid { grid-template-columns: 1fr 1fr; }
+  .stack-col { border-bottom: 1px solid var(--border); }
+  .stack-col:nth-child(2n) { border-right: none; }
+  .about-grid { grid-template-columns: 1fr; gap: 40px; }
+  .offpiste-row { grid-template-columns: 1fr; }
+  .op-card { border-right: none; border-bottom: 1px solid var(--border); }
+  .op-card:last-child { border-bottom: none; }
+}
+@media (max-width: 720px) {
+  nav { padding: 0 20px; }
+  .nav-item, .nav-plain:not(.nav-cv) { display: none; }
+  .wrap { padding: 64px 20px; }
+  .hero-content { padding: 0 20px 64px; }
+  .slider-shell { margin-right: -20px; }
+  .slider-track { padding-right: 20px; }
+  .slider-controls { padding-right: 0; }
+  .cs-card { flex: 0 0 calc(88vw - 20px); }
+  .wiww-grid { grid-template-columns: 1fr; }
+  .wiww-col { border-right: none; border-bottom: 1px solid var(--border); }
+  .stack-grid { grid-template-columns: 1fr 1fr; }
+  .contact-inner { flex-direction: column; align-items: flex-start; }
+}
+
+  
+/* Leaflet popup — matches portfolio palette */
+.leaflet-popup-content-wrapper { background: #f8f4ee; border: 1px solid #e8e0d4; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.leaflet-popup-tip { background: #f8f4ee; }
+.leaflet-popup-content { margin: 6px 14px; line-height: 1.3; }
+
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="index.html" class="nav-logo">yang<span>.spatial</span></a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-home">Home</a>
+    <div class="nav-mega-item">
+      <button class="nav-menu-trigger">Menu <span class="nav-chevron">&#9660;</span></button>
+      <div class="nav-mega-drop">
+        <div class="mega-col">
+          <a href="#case-studies" class="mega-head">Work</a>
+          <a href="asset-monitoring.html" class="mega-link">Asset Management</a>
+          <a href="bioregional-atlas.html" class="mega-link">Bioregional Atlas</a>
+          <a href="stockpile-volume.html" class="mega-link">Stockpile Volume</a>
+        </div>
+        <div class="mega-col">
+          <a href="#wiww" class="mega-head">Capabilities</a>
+          <a href="airport-ols.html" class="mega-link">Airport OLS &amp; Hazard Detection</a>
+          <a href="terrain-modeling.html" class="mega-link">Terrain Modeling</a>
+          <a href="hydrological-assessment.html" class="mega-link">Hydrological Assessment</a>
+          <a href="etl-geodatabase.html" class="mega-link">Geospatial ETL</a>
+        </div>
+        <div class="mega-col">
+          <a href="#stack" class="mega-head">Stack</a>
+          <a href="#about" class="mega-head">About</a>
+          <button class="mega-link" onclick="downloadCV(event)">Download CV &#8595;</button>
+        </div>
+        <div class="mega-col">
+          <a href="#offpiste" class="mega-head">Off-piste</a>
+          <a href="snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
+          <a href="#contact" class="mega-head">Contact</a>
+          <a href="mailto:yangchh@pm.me" class="mega-link">yangchh@pm.me</a>
+          <a href="https://github.com/yangchh17" class="mega-link" target="_blank">GitHub</a>
+          <a href="https://www.linkedin.com/in/yangchh/" class="mega-link" target="_blank">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div id="hero-map"></div>
+  <div class="hero-veil"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Spatial Systems &amp; GIS &nbsp;&middot;&nbsp; Vancouver, BC</div>
+    <h1 class="hero-name">Chenghao<em>Yang</em></h1>
+    <p class="hero-desc">
+      I design geospatial systems that turn fragmented data into clear,
+      usable infrastructure &#8212; across remote communities, environmental
+      systems, and terrain analysis.
+    </p>
+    <div class="hero-btns">
+      <a href="#case-studies" class="btn btn-fill">View work</a>
+      <a href="#contact" class="btn btn-ghost">Get in touch</a>
+    </div>
+  </div>
+</section>
+
+<div class="section-rule"></div>
+
+<!-- ── CASE STUDIES ── -->
+<div class="wrap" id="case-studies">
+  <div class="sec-eyebrow">Case studies</div>
+  <div class="sec-title">Selected work</div>
+
+  <div class="slider-shell">
+    <div class="slider-track" id="sliderTrack">
+
+      <a href="asset-monitoring.html" class="cs-card is-active" data-index="0">
+        <div class="cs-idx">01 &nbsp;/&nbsp; Infrastructure</div>
+        <div class="cs-title">Asset Management System</div>
+        <p class="cs-body">Field&#8209;to&#8209;office GIS systems for centralised condition tracking across 100+ infrastructure assets &#8212; replacing fragmented workflows with real&#8209;time monitoring platforms.</p>
+        <div class="cs-foot">
+          <div class="cs-tags">
+            <span class="cs-tag">Survey123</span>
+            <span class="cs-tag">ArcGIS Dashboards</span>
+            <span class="cs-tag">Arcade</span>
+            <span class="cs-tag">ETL</span>
+          </div>
+          <span class="cs-link">View &#8594;</span>
+        </div>
+      </a>
+
+      <a href="bioregional-atlas.html" class="cs-card" data-index="1">
+        <div class="cs-idx">02 &nbsp;/&nbsp; Cartography</div>
+        <div class="cs-title">Bioregional Atlas</div>
+        <p class="cs-body">Scalable spatial intelligence systems for multi&#8209;site environmental analysis &#8212; reducing atlas production from weeks to hours.</p>
+        <div class="cs-foot">
+          <div class="cs-tags">
+            <span class="cs-tag">ArcGIS Pro</span>
+            <span class="cs-tag">Map Series</span>
+            <span class="cs-tag">Cartography</span>
+            <span class="cs-tag">Netdown</span>
+          </div>
+          <span class="cs-link">View &#8594;</span>
+        </div>
+      </a>
+
+      <a href="stockpile-volume.html" class="cs-card" data-index="2">
+        <div class="cs-idx">03 &nbsp;/&nbsp; Remote Sensing</div>
+        <div class="cs-title">Stockpile Volume Estimation</div>
+        <p class="cs-body">LiDAR and drone&#8209;based stockpile volume analysis &#8212; replacing manual surveys with repeatable cut&#8209;fill workflows.</p>
+        <div class="cs-foot">
+          <div class="cs-tags">
+            <span class="cs-tag">LiDAR</span>
+            <span class="cs-tag">Drone / SfM</span>
+            <span class="cs-tag">Cut-Fill</span>
+            <span class="cs-tag">ArcGIS Pro</span>
+          </div>
+          <span class="cs-link">View &#8594;</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="slider-controls">
+    <div class="slider-dots" id="sliderDots">
+      <div class="dot is-active" data-i="0"></div>
+      <div class="dot" data-i="1"></div>
+      <div class="dot" data-i="2"></div>
+    </div>
+    <div class="slider-arrows">
+      <button class="arrow-btn" id="arrowPrev" disabled aria-label="Previous">&#8592;</button>
+      <button class="arrow-btn" id="arrowNext" aria-label="Next">&#8594;</button>
+    </div>
+  </div>
+</div>
+
+<div class="section-rule"></div>
+
+<!-- ── WHAT I WORK WITH ── -->
+<div class="wrap" id="wiww">
+  <div class="sec-eyebrow">Analytical capabilities</div>
+  <div class="sec-title">What I Work With</div>
+
+  <div class="wiww-grid">
+
+    <a href="airport-ols.html" class="wiww-col">
+      <div class="wiww-title">Airport OLS &amp; Hazard Detection</div>
+      <p class="wiww-body">3D airspace modelling and LiDAR&#8209;based hazard detection for aviation systems &#8212; supporting compliance analysis and resource&#8209;aware planning.</p>
+      <span class="wiww-link">View &#8594;</span>
+    </a>
+
+    <a href="terrain-modeling.html" class="wiww-col">
+      <div class="wiww-title">Terrain Modeling</div>
+      <p class="wiww-body">LiDAR&#8209;based terrain modelling for landscape systems &#8212; generating high&#8209;resolution DTMs, DSMs, and derived surfaces for slope, aspect, and curvature analysis.</p>
+      <span class="wiww-link">View &#8594;</span>
+    </a>
+
+    <a href="hydrological-assessment.html" class="wiww-col">
+      <div class="wiww-title">Hydrological Assessment</div>
+      <p class="wiww-body">Watershed delineation and hydrological assessment from LiDAR and DEM data &#8212; mapping stream networks, flow accumulation, and drainage basin structures.</p>
+      <span class="wiww-link">View &#8594;</span>
+    </a>
+
+    <a href="etl-geodatabase.html" class="wiww-col">
+      <div class="wiww-title">Geospatial ETL &amp; Database Automation</div>
+      <p class="wiww-body">Geospatial ETL pipelines and data system design for spatial infrastructure &#8212; integrating multi&#8209;source datasets into consistent, scalable geodatabases.</p>
+      <span class="wiww-link">View &#8594;</span>
+    </a>
+
+  </div>
+</div>
+
+<div class="section-rule"></div>
+
+<!-- ── STACK ── -->
+<div class="wrap" id="stack">
+  <div class="sec-eyebrow">Stack</div>
+  <div class="stack-grid">
+    <div class="stack-col">
+      <div class="stack-col-name">GIS Platforms</div>
+      <ul class="stack-list">
+        <li>ArcGIS Pro / Online</li>
+        <li>QGIS</li>
+        <li>Leaflet.js</li>
+        <li>ENVI</li>
+      </ul>
+    </div>
+    <div class="stack-col">
+      <div class="stack-col-name">Programming</div>
+      <ul class="stack-list">
+        <li>Python / ArcPy</li>
+        <li>R (lidR)</li>
+        <li>Arcade</li>
+        <li>FME / ModelBuilder</li>
+      </ul>
+    </div>
+    <div class="stack-col">
+      <div class="stack-col-name">Data Engineering</div>
+      <ul class="stack-list">
+        <li>Geodatabase schema design</li>
+        <li>ETL pipelines</li>
+        <li>CAD-to-GIS integration</li>
+        <li>Metadata standards</li>
+      </ul>
+    </div>
+    <div class="stack-col">
+      <div class="stack-col-name">Field &amp; Outputs</div>
+      <ul class="stack-list">
+        <li>Survey123 / FieldMaps</li>
+        <li>ArcGIS Dashboards</li>
+        <li>Map series &amp; atlas</li>
+        <li>Drone pilot (Basic)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section-rule"></div>
+
+<!-- ── ABOUT ── -->
+<div class="wrap" id="about">
+  <div class="sec-eyebrow">About</div>
+  <div class="about-grid">
+    <div class="about-body">
+      <p>GIS professional with <strong>6+ years of experience</strong> designing and automating geospatial data workflows. I operate as a one-person GIS department &#8212; building data structures, managing spatial datasets, and maintaining the broader technical system.</p>
+      <p>My work sits at the intersection of <strong>spatial data engineering</strong> and applied analysis. I&#8217;m interested in building systems that scale &#8212; not just producing outputs, but designing the infrastructure that makes good spatial decisions repeatable.</p>
+      <p>MSc in Geomatics for Environmental Management (UBC). BSc in Environmental Science with GIS Certificate (SFU). Currently a G.I.T. Applicant and drone pilot (basic).</p>
+      <div class="about-actions">
+        <a href="#contact" class="btn btn-fill">Contact me</a>
+        <a href="#" class="btn btn-ghost" onclick="downloadCV(event)">Download CV</a>
+      </div>
+    </div>
+    <div>
+      <div class="about-stats">
+        <div class="about-stat"><div class="stat-val">6+</div><div class="stat-lbl">Years experience</div></div>
+        <div class="about-stat"><div class="stat-val">100+</div><div class="stat-lbl">Assets monitored</div></div>
+        <div class="about-stat"><div class="stat-val">MSc</div><div class="stat-lbl">UBC Geomatics</div></div>
+        <div class="about-stat"><div class="stat-val">G.I.T</div><div class="stat-lbl">Applicant 2025</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-rule"></div>
+
+<!-- ── OFF-PISTE ── -->
+<div class="wrap" id="offpiste">
+  <div class="sec-eyebrow">Off-piste</div>
+  <div class="offpiste-row">
+    <a href="snowboard.html" class="op-card">
+      <div class="op-sub">Snowboard log</div>
+      <div class="op-title">Riding the mountains</div>
+      <p class="op-body">GPS tracks, speed heatmaps, and vertical drop stats from Whistler, Big White, and beyond &#8212; pulled live from Strava.</p>
+      <div class="op-cta">View all rides &#8594;</div>
+    </a>
+    <div class="op-card" style="cursor:default">
+      <div class="op-sub">Media</div>
+      <div class="op-title">Photography &amp; video</div>
+      <p class="op-body" style="color:var(--text-3)">Landscapes, fieldwork, and time in the mountains. Coming soon.</p>
+      <span class="op-pill">Coming soon</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-rule"></div>
+
+<!-- ── CONTACT ── -->
+<div class="wrap" id="contact">
+  <div class="contact-inner">
+    <div class="contact-heading">Let&#8217;s work<br><span>together.</span></div>
+    <div class="contact-links">
+      <a href="mailto:yangchh@pm.me" class="btn btn-fill">yangchh@pm.me</a>
+      <a href="https://github.com/yangchh17" class="btn btn-ghost" target="_blank">GitHub</a>
+      <a href="https://www.linkedin.com/in/yangchh/" class="btn btn-ghost" target="_blank">LinkedIn</a>
+    </div>
+  </div>
+</div>
+
+<footer>&#169; 2025 Chenghao Yang &nbsp;&middot;&nbsp; Vancouver, BC &nbsp;&middot;&nbsp; Built with GitHub Pages</footer>
+
+<!-- ── HERO MAP ── -->
+<script>
+(function () {
+  var m = L.map('hero-map', { zoomControl: false, attributionControl: false });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains: 'abcd'
+  }).addTo(m);
+
+  var starSmall = L.icon({
+    iconUrl: 'star-marker.svg',
+    iconSize:    [20, 20],
+    iconAnchor:  [10, 10],
+    popupAnchor: [0, -12]
+  });
+  var starLarge = L.icon({
+    iconUrl: 'star-marker.svg',
+    iconSize:    [34, 34],
+    iconAnchor:  [17, 17],
+    popupAnchor: [0, -18]
+  });
+
+  var popupOpts = { maxWidth: 200, minWidth: 160 };
+
+  L.marker([53.42, -129.25], {icon: starSmall}).addTo(m)
+    .bindPopup('<b>Infrastructure Asset Monitoring</b> <a href="asset-monitoring.html">View →</a>', popupOpts);
+  L.marker([54.01, -132.12], {icon: starSmall}).addTo(m)
+    .bindPopup('<b>Airport OLS &amp; Hazard Tree</b> <a href="airport-ols.html">View →</a>', popupOpts);
+  L.marker([50.02, -125.24], {icon: starSmall}).addTo(m)
+    .bindPopup('<b>Bioregional Atlas</b> <a href="bioregional-atlas.html">View →</a>', popupOpts);
+  L.marker([49.25, -123.12], {icon: starLarge}).addTo(m)
+    .bindPopup('<b>Vancouver, BC</b> <span style="color:#9a7a6e;font-size:10px;font-family:monospace;">Based here</span>', popupOpts);
+
+  m.scrollWheelZoom.disable();
+
+  setTimeout(function () {
+    m.invalidateSize();
+    m.setView([47.05, -139.1207], 5);
+    setTimeout(function () {
+      setInterval(function () {
+        m.panBy([30, 0], {animate: true, duration: 6});
+      }, 7000);
+    }, 2000);
+  }, 300);
+}());
+</script>
+
+<!-- ── SLIDER ── -->
+<script>
+(function () {
+  var track  = document.getElementById('sliderTrack');
+  var cards  = Array.from(track.querySelectorAll('.cs-card'));
+  var dots   = Array.from(document.querySelectorAll('.dot'));
+  var prev   = document.getElementById('arrowPrev');
+  var next   = document.getElementById('arrowNext');
+  var active = 0;
+  var total  = cards.length;
+
+  function goTo(idx) {
+    idx = Math.max(0, Math.min(total - 1, idx));
+    active = idx;
+    // scroll card into view
+    track.scrollTo({ left: cards[idx].offsetLeft, behavior: 'smooth' });
+    // update visual state
+    cards.forEach(function (c, i) { c.classList.toggle('is-active', i === idx); });
+    dots.forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
+    prev.disabled = idx === 0;
+    next.disabled = idx === total - 1;
+  }
+
+  // detect active card on native scroll / touch swipe
+  var scrollTimer;
+  track.addEventListener('scroll', function () {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function () {
+      var trackRect = track.getBoundingClientRect();
+      var best = 0, bestScore = -Infinity;
+      cards.forEach(function (c, i) {
+        var r = c.getBoundingClientRect();
+        // prefer card whose left edge is closest to track's left edge
+        var score = -(Math.abs(r.left - trackRect.left));
+        if (score > bestScore) { bestScore = score; best = i; }
+      });
+      if (best !== active) goTo(best);
+    }, 60);
+  }, { passive: true });
+
+  // arrow clicks
+  prev.addEventListener('click', function () { goTo(active - 1); });
+  next.addEventListener('click', function () { goTo(active + 1); });
+
+  // dot clicks
+  dots.forEach(function (d) {
+    d.addEventListener('click', function () { goTo(parseInt(d.getAttribute('data-i'))); });
+  });
+
+  // mouse-drag to scroll
+  var isDown = false, startX = 0, startScroll = 0;
+  track.addEventListener('mousedown', function (e) {
+    isDown = true; startX = e.pageX; startScroll = track.scrollLeft;
+  });
+  document.addEventListener('mouseup', function () { isDown = false; });
+  track.addEventListener('mousemove', function (e) {
+    if (!isDown) return;
+    e.preventDefault();
+    track.scrollLeft = startScroll - (e.pageX - startX);
+  });
+
+  // init
+  goTo(0);
+}());
+</script>
+
+<!-- ── CV ── -->
+<script>
+function downloadCV(e) {
+  e.preventDefault();
+  var l = document.createElement('a');
+  l.href = 'cv.pdf';
+  l.download = 'Chenghao_Yang_CV.pdf';
+  document.body.appendChild(l);
+  l.click();
+  document.body.removeChild(l);
+}
+</script>
+</body>
+</html>

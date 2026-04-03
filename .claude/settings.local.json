@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(sed -n '33,40p' \"C:/Users/chhya/Downloads/Chenghao Yang _ GIS & Spatial.html\")",
+      "Bash(sed -n '414,460p' \"C:/Users/chhya/Downloads/Chenghao Yang _ GIS & Spatial.html\")",
+      "Bash(ls \"D:/03_Projects/Portfolio/\"*.html)",
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $f.html ===\")",
+      "Read(//d/03_Projects/Portfolio/**)",
+      "Bash(done)",
+      "Bash(python apply_styles.py)",
+      "Bash(ls D:/03_Projects/Portfolio/*.bak)",
+      "Bash(powershell -Command \"Get-ChildItem -Filter ''*.html'' | ForEach-Object { \\(Get-Content $_FullName -Raw\\) -replace ''href=\"\"index\\\\.html#contact\"\" class=\"\"nav-plain\"\">Contact'', ''href=\"\"#contact\"\" class=\"\"nav-plain\"\">Contact'' | Set-Content $_FullName -NoNewline }\")",
+      "Bash(python process_slopes.py)",
+      "Bash(python -c \":*)",
+      "Bash(python3 -c \":*)"
+    ]
+  }
+}

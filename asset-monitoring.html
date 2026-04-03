@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Asset Monitoring System | Chenghao Yang</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  
+
+  <style>
+    :root {
+  --bg:        #ffffff;
+  --bg-off:    #f8f4ee;
+  --bg-muted:  #f1ebe0;
+  --border:    #e8e0d4;
+  --border-m:  #d8cfc0;
+  --accent:    #d44820;
+  --accent-2:  #c8880a;
+  --text:      #18120a;
+  --text-2:    #4a3828;
+  --text-3:    #9a8878;
+  --mono: 'DM Mono', monospace;
+  --syne: 'Syne', sans-serif;
+  --sans: 'DM Sans', sans-serif;
+}
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    /* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 56px;
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--text); letter-spacing: .05em; text-decoration: none;
+  flex-shrink: 0;
+}
+.nav-logo span { color: var(--accent); }
+.nav-right { display: flex; align-items: center; gap: 0; }
+.nav-home {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .14em; text-transform: uppercase; text-decoration: none;
+  padding: 0 14px; height: 52px; display: flex; align-items: center;
+  transition: color .16s; border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+.nav-home:hover { color: var(--accent); }
+.nav-menu-trigger {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .14em; text-transform: uppercase;
+  padding: 0 16px; height: 52px; display: flex; align-items: center; gap: 6px;
+  cursor: pointer; background: none; border: none;
+  transition: color .16s; white-space: nowrap;
+}
+.nav-menu-trigger:hover { color: var(--accent); }
+.nav-chevron { font-size: 7px; display: inline-block; transition: transform .18s; }
+.nav-mega-item { position: static; }
+.nav-mega-item:hover .nav-chevron { transform: rotate(180deg); }
+.nav-mega-drop {
+  display: none;
+  position: fixed;
+  top: 52px; left: 0; right: 0;
+  background: var(--bg);
+  border-top: 2px solid var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding: 36px 56px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 48px;
+  z-index: 300;
+  box-shadow: 0 8px 32px rgba(0,0,0,.07);
+}
+.nav-mega-item:hover .nav-mega-drop { display: grid; }
+.mega-col { display: flex; flex-direction: column; }
+.mega-head {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--text); letter-spacing: .14em; text-transform: uppercase;
+  text-decoration: none; display: block;
+  padding-bottom: 10px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  transition: color .14s;
+}
+.mega-head:hover { color: var(--accent); }
+.mega-head + .mega-head { margin-top: 20px; }
+.mega-link {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .08em; text-decoration: none; display: block;
+  padding: 5px 0; transition: color .14s; cursor: pointer;
+  background: none; border: none; text-align: left; text-transform: none;
+}
+.mega-link:hover { color: var(--accent); }
+/* ── HERO ── */
+    .case-hero {
+      position: relative;
+      z-index: 1;
+      padding: 160px 48px 80px;
+      max-width: 900px;
+      margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .case-meta {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meta-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+    }
+
+    .case-number {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .case-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    .case-title span { color: var(--accent); }
+
+    .case-summary {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 640px;
+      line-height: 1.8;
+    }
+
+    /* ── CONTENT ── */
+    .case-content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 48px 96px;
+    }
+
+    /* ── PHASE BLOCKS ── */
+    .phase {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 48px;
+      padding: 64px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .phase:last-child { border-bottom: none; }
+
+    .phase-label-col {
+      padding-top: 4px;
+    }
+
+    .phase-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .phase-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+      position: relative;
+    }
+
+    .phase-name::after {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--accent);
+      margin-top: 12px;
+    }
+
+    .phase-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .phase-body p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.85;
+    }
+
+    .phase-body p strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ── CALLOUT ── */
+    .callout {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      padding: 20px 24px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .callout strong {
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* ── OUTCOME STATS ── */
+    .outcome-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .outcome-stat {
+      background: var(--surface);
+      padding: 28px 24px;
+    }
+
+    .outcome-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .outcome-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.5;
+    }
+
+    /* ── TECH STACK ── */
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .tech-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 4px;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── NAV BETWEEN PROJECTS ── */
+    .case-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 48px;
+      border-top: 1px solid var(--border);
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .case-nav a {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.2s;
+    }
+
+    .case-nav a:hover { color: var(--accent); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .case-hero { padding: 120px 24px 64px; }
+      .case-content { padding: 0 24px 64px; }
+      .phase { grid-template-columns: 1fr; gap: 24px; }
+      .phase-name::after { display: none; }
+      .outcome-stats { grid-template-columns: 1fr; }
+      .case-nav { padding: 32px 24px; }
+    }
+
+    /* ── PROJECT MAP ── */
+    .project-map-section {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 48px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .map-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-top: 48px;
+    }
+    .map-label span {
+      color: var(--accent);
+      margin-left: 8px;
+    }
+    .project-map-container {
+      width: 100%;
+      height: 420px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 48px;
+      position: relative;
+    }
+    .leaflet-popup-content-wrapper {
+      background: var(--surface2, #241a14);
+      color: var(--text, #f5ede8);
+      border: 1px solid var(--border, #3d2318);
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .leaflet-popup-tip { background: var(--surface2, #241a14); }
+    .leaflet-popup-content { font-family: 'DM Sans', sans-serif; font-size: 12px; line-height: 1.6; }
+    .leaflet-popup-content b { font-family: 'Syne', sans-serif; color: #e85d3a; }
+    @media(max-width:768px){
+      .project-map-section { padding: 0 24px 0; }
+      .project-map-container { height: 260px; }
+    }
+  /* ─── FOOTER ─── */
+footer {
+  text-align: center; padding: 22px 56px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 9px; color: var(--text-3); letter-spacing: .08em;
+}
+  
+/* ─── CONTACT ─── */
+.contact-inner { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+.contact-heading { font-family: var(--syne); font-size: clamp(26px,3.2vw,40px); font-weight: 800; color: var(--text); line-height: 1.1; }
+.contact-heading span { color: var(--accent); }
+.contact-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 80px 56px; }
+.section-rule { border: none; border-top: 1px solid var(--border); margin: 0 56px; }
+.btn { display: inline-flex; align-items: center; padding: 10px 20px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; border: 1px solid; transition: background .16s, color .16s; cursor: pointer; }
+.btn-fill { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-fill:hover { background: #b83612; border-color: #b83612; }
+.btn-ghost { background: transparent; color: var(--text); border-color: var(--border-m); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">yang<span>.spatial</span></a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-home">Home</a>
+    <div class="nav-mega-item">
+      <button class="nav-menu-trigger">Menu <span class="nav-chevron">&#9660;</span></button>
+      <div class="nav-mega-drop">
+        <div class="mega-col">
+          <a href="index.html#case-studies" class="mega-head">Work</a>
+          <a href="asset-monitoring.html" class="mega-link">Asset Management</a>
+          <a href="bioregional-atlas.html" class="mega-link">Bioregional Atlas</a>
+          <a href="stockpile-volume.html" class="mega-link">Stockpile Volume</a>
+        </div>
+        <div class="mega-col">
+          <a href="index.html#wiww" class="mega-head">Capabilities</a>
+          <a href="airport-ols.html" class="mega-link">Airport OLS &amp; Hazard Detection</a>
+          <a href="terrain-modeling.html" class="mega-link">Terrain Modeling</a>
+          <a href="hydrological-assessment.html" class="mega-link">Hydrological Assessment</a>
+          <a href="etl-geodatabase.html" class="mega-link">Geospatial ETL</a>
+        </div>
+        <div class="mega-col">
+          <a href="index.html#stack" class="mega-head">Stack</a>
+          <a href="index.html#about" class="mega-head">About</a>
+          <button class="mega-link" onclick="downloadCV(event)">Download CV &#8595;</button>
+        </div>
+        <div class="mega-col">
+          <a href="index.html#offpiste" class="mega-head">Off-piste</a>
+          <a href="snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
+          <a href="#contact" class="mega-head">Contact</a>
+          <a href="mailto:yangchh@pm.me" class="mega-link">yangchh@pm.me</a>
+          <a href="https://github.com/yangchh17" class="mega-link" target="_blank">GitHub</a>
+          <a href="https://www.linkedin.com/in/yangchh/" class="mega-link" target="_blank">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+  <!-- HERO -->
+  <div class="case-hero">
+    <div class="case-number">Project 01</div>
+    <h1 class="case-title">Infrastructure Asset<br><span>Monitoring System</span></h1>
+    <p class="case-summary">
+      Designing a field-to-office GIS workflow to centralize infrastructure condition data
+      across a remote First Nations community — replacing scattered spreadsheets with a
+      real-time monitoring platform.
+    </p>
+
+    <div class="case-meta" style="margin-top: 40px;">
+      <div class="meta-item">
+        <span class="meta-label">Domain</span>
+        <span class="meta-value">Indigenous Infrastructure</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Scale</span>
+        <span class="meta-value">100+ Assets</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Role</span>
+        <span class="meta-value">GIS Specialist</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Status</span>
+        <span class="meta-value">Deployed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+
+  <!-- PROJECT MAP -->
+  <div class="project-map-section">
+    <div class="map-label">Spatial Context <span>// Asset Coverage</span></div>
+    <div class="project-map-container" id="map-asset"></div>
+  </div>
+
+  <div class="case-content">
+
+    <!-- CONTEXT -->
+    <div class="phase">
+      <div class="phase-label-col">
+        <div class="phase-num">00</div>
+        <div class="phase-name">Context</div>
+      </div>
+      <div class="phase-body">
+        <p>
+          Infrastructure assets in a remote Indigenous community — including buildings, water and
+          wastewater systems, boardwalk roads, utilities, fuel storage, and electrical infrastructure —
+          required regular condition assessments as part of a <strong>federal reporting program</strong>.
+        </p>
+        <p>
+          Assessments were conducted by visiting engineers on an infrequent basis. Between visits,
+          there was no system in place to track asset conditions, changes, or maintenance status
+          in a consistent or accessible way.
+        </p>
+      </div>
+    </div>
+
+    <!-- PROBLEM -->
+    <div class="phase">
+      <div class="phase-label-col">
+        <div class="phase-num">01</div>
+        <div class="phase-name">Problem</div>
+      </div>
+      <div class="phase-body">
+        <p>
+          Asset data was distributed across engineering reports, spreadsheets, and institutional memory —
+          with no centralized GIS database and no consistent workflow for tracking changes over time.
+        </p>
+        <div class="callout">
+          <strong>Core gap</strong>
+          No single source of truth for asset condition data meant decision-makers couldn't
+          access current status, prioritize interventions, or produce consistent federal reports
+          without manually reconciling fragmented records.
+        </div>
+        <p>
+          The lack of spatial context also made it difficult to communicate asset status to
+          non-technical stakeholders or to identify patterns across asset categories and locations.
+        </p>
+      </div>
+    </div>
+
+    <!-- APPROACH -->
+    <div class="phase">
+      <div class="phase-label-col">
+        <div class="phase-num">02</div>
+        <div class="phase-name">Approach</div>
+      </div>
+      <div class="phase-body">
+        <p>
+          The solution was structured around three components: <strong>standardized data collection</strong>,
+          a <strong>centralized geodatabase</strong>, and a <strong>real-time visualization layer</strong>.
+        </p>
+        <p>
+          A <strong>Survey123</strong> form was built to standardize field data collection by visiting engineers —
+          capturing asset type, condition rating, notes, and photos in a structured format aligned
+          to the ACRS reporting framework.
+        </p>
+        <p>
+          A <strong>geodatabase schema</strong> was designed with domains and subtypes to enforce
+          data integrity and ensure consistency across asset categories. This schema became the
+          single source of truth feeding all downstream reporting.
+        </p>
+        <p>
+          <strong>ArcGIS Dashboards</strong> with Arcade expressions were built on top of the
+          live database — providing condition overviews, asset-level drill-downs, and visual
+          summaries accessible to both field staff and program managers.
+        </p>
+
+        <div class="tech-stack">
+          <span class="tech-pill">ArcGIS Survey123</span>
+          <span class="tech-pill">ArcGIS Online</span>
+          <span class="tech-pill">ArcGIS Dashboards</span>
+          <span class="tech-pill">Arcade</span>
+          <span class="tech-pill">Geodatabase Schema Design</span>
+          <span class="tech-pill">ACRS Framework</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTCOME -->
+    <div class="phase">
+      <div class="phase-label-col">
+        <div class="phase-num">03</div>
+        <div class="phase-name">Outcome</div>
+      </div>
+      <div class="phase-body">
+
+        <div class="outcome-stats">
+          <div class="outcome-stat">
+            <div class="outcome-value">100+</div>
+            <div class="outcome-label">Assets centralized in one platform</div>
+          </div>
+          <div class="outcome-stat">
+            <div class="outcome-value">↓</div>
+            <div class="outcome-label">Manual reconciliation eliminated</div>
+          </div>
+          <div class="outcome-stat">
+            <div class="outcome-value">Live</div>
+            <div class="outcome-label">Real-time condition visibility</div>
+          </div>
+        </div>
+
+        <p>
+          The system established a centralized monitoring platform where all asset condition data
+          flows from the field directly into a structured geodatabase, surfaced through dashboards
+          that any stakeholder can access without GIS expertise.
+        </p>
+        <p>
+          The standardized schema also made federal reporting significantly faster — data
+          no longer needed to be manually compiled from disparate sources before each submission cycle.
+        </p>
+        <div class="callout">
+          <strong>Transferable design</strong>
+          The schema and workflow were designed to be replicable across similar communities
+          participating in the same federal reporting program — not just a one-off solution.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PROJECT NAV -->
+  <div class="case-nav">
+    <a href="index.html">← Back to Projects</a>
+    <a href="airport-ols.html">Airport OLS Analysis →</a>
+  </div>
+
+
+  <script>
+  (function(){
+    // ── Hartley Bay, BC — 53.42513°N, 129.25273°W ──
+    var CENTER = [53.42513, -129.25273];
+    var ZOOM   = 16;
+
+    var m = L.map('map-asset', {
+      zoomControl: true,
+      attributionControl: false,
+      scrollWheelZoom: false
+    });
+
+    // Dark basemap
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19, subdomains: 'abcd'
+    }).addTo(m);
+
+    m.setView(CENTER, ZOOM);
+
+    // ── Colour palette ──
+    var C = {
+      building:  '#e85d3a',   // accent red
+      road:      '#f0a060',   // amber
+      water:     '#5b9bd5',   // blue
+      power:     '#6dbf8a',   // green
+      pier:      '#c8a87a',   // tan
+      landuse:   '#9a7a6e',   // muted brown
+    };
+
+    // ── Helper: OSM nodes → [lat,lng] array ──
+    function nodeCoords(nodeMap, refs) {
+      return refs
+        .map(function(id){ return nodeMap[id]; })
+        .filter(Boolean);
+    }
+
+    // ── Style by OSM tag ──
+    function styleForWay(tags) {
+      if (tags.building)            return { color: C.building, fillColor: C.building, fillOpacity: 0.35, weight: 1.5 };
+      if (tags.highway)             return { color: C.road,     weight: tags.highway === 'footway' ? 1.5 : 2.5, opacity: 0.85, fill: false, dashArray: tags.highway === 'footway' ? '4,4' : null };
+      if (tags.waterway || tags.natural === 'water') return { color: C.water, fillColor: C.water, fillOpacity: 0.3, weight: 1.5 };
+      if (tags.power)               return { color: C.power,   weight: 1.5, opacity: 0.8, fill: false, dashArray: '3,5' };
+      if (tags.man_made === 'pier') return { color: C.pier,    fillColor: C.pier, fillOpacity: 0.4, weight: 2 };
+      if (tags.landuse || tags.leisure) return { color: C.landuse, fillColor: C.landuse, fillOpacity: 0.12, weight: 1, dashArray: '4,4' };
+      return { color: '#9a7a6e', fillOpacity: 0.1, weight: 1 };
+    }
+
+    // ── Popup label ──
+    function labelForTags(tags) {
+      if (tags.building)   return '<b>' + (tags.name || 'Building') + '</b><br><span style="color:#9a7a6e;font-size:11px;">' + (tags.building !== 'yes' ? tags.building : 'structure') + '</span>';
+      if (tags.highway)    return '<b>' + (tags.name || 'Road / Path') + '</b><br><span style="color:#9a7a6e;font-size:11px;">highway: ' + tags.highway + '</span>';
+      if (tags.waterway)   return '<b>' + (tags.name || 'Waterway') + '</b><br><span style="color:#9a7a6e;font-size:11px;">' + tags.waterway + '</span>';
+      if (tags.natural === 'water') return '<b>' + (tags.name || 'Water body') + '</b>';
+      if (tags.power)      return '<b>Power Line</b><br><span style="color:#9a7a6e;font-size:11px;">power: ' + tags.power + '</span>';
+      if (tags.man_made === 'pier') return '<b>Pier / Dock</b>';
+      if (tags.landuse)    return '<b>Land Use</b><br><span style="color:#9a7a6e;font-size:11px;">' + tags.landuse + '</span>';
+      return '<b>Feature</b>';
+    }
+
+    // ── Overpass query — fetch all map features within ~500m of centre ──
+    var bbox = '53.410,-129.265,53.430,-129.244';
+    var query = '[out:json][timeout:25];('
+      + 'way["building"](' + bbox + ');'
+      + 'way["highway"](' + bbox + ');'
+      + 'way["waterway"](' + bbox + ');'
+      + 'way["natural"="water"](' + bbox + ');'
+      + 'way["power"](' + bbox + ');'
+      + 'way["man_made"="pier"](' + bbox + ');'
+      + 'way["landuse"](' + bbox + ');'
+      + 'way["leisure"](' + bbox + ');'
+      + ');out body;>;out skel qt;';
+
+    var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+
+    // Loading indicator
+    var loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,12,10,0.7);z-index:999;font-family:monospace;font-size:12px;color:#9a7a6e;letter-spacing:0.1em;';
+    loadingDiv.textContent = 'Loading OSM data…';
+    document.getElementById('map-asset').appendChild(loadingDiv);
+
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        loadingDiv.remove();
+
+        // Build node lookup
+        var nodes = {};
+        data.elements.forEach(function(el){
+          if (el.type === 'node') nodes[el.id] = [el.lat, el.lon];
+        });
+
+        var counts = { building:0, highway:0, water:0, power:0, pier:0, other:0 };
+
+        data.elements.forEach(function(el){
+          if (el.type !== 'way') return;
+          var tags = el.tags || {};
+          var coords = nodeCoords(nodes, el.nodes || []);
+          if (coords.length < 2) return;
+
+          var sty = styleForWay(tags);
+          var label = labelForTags(tags);
+          var layer;
+
+          // Closed ways with area tags → polygon; open ways → polyline
+          var isClosed = el.nodes[0] === el.nodes[el.nodes.length-1];
+          var isArea = tags.building || tags.natural === 'water' || tags.landuse || tags.leisure || tags.man_made === 'pier' || tags.waterway === 'riverbank';
+
+          if (isClosed && isArea) {
+            layer = L.polygon(coords, sty);
+          } else {
+            layer = L.polyline(coords, sty);
+          }
+
+          layer.addTo(m).bindPopup(label);
+
+          if (tags.building) counts.building++;
+          else if (tags.highway) counts.highway++;
+          else if (tags.waterway || tags.natural==='water') counts.water++;
+          else if (tags.power) counts.power++;
+          else if (tags.man_made==='pier') counts.pier++;
+          else counts.other++;
+        });
+
+        console.log('OSM features loaded:', counts);
+
+        // Legend
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function() {
+          var div = L.DomUtil.create('div');
+          div.style.cssText = 'background:rgba(26,20,16,0.92);border:1px solid #3d2318;border-radius:6px;padding:10px 14px;font-family:monospace;font-size:10px;line-height:1.9;letter-spacing:0.06em;';
+          div.innerHTML = [
+            '<div style="color:#9a7a6e;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:4px;">ASSET TYPES</div>',
+            '<div><span style="color:#e85d3a">■</span> Buildings (' + counts.building + ')</div>',
+            '<div><span style="color:#f0a060">─</span> Roads & Paths</div>',
+            '<div><span style="color:#5b9bd5">■</span> Water</div>',
+            '<div><span style="color:#6dbf8a">╌</span> Power Lines</div>',
+            '<div><span style="color:#c8a87a">■</span> Piers / Docks</div>',
+          ].join('');
+          return div;
+        };
+        legend.addTo(m);
+      })
+      .catch(function(err) {
+        loadingDiv.style.color = '#e85d3a';
+        loadingDiv.textContent = 'Could not load OSM data — check connection.';
+        console.error('Overpass error:', err);
+      });
+
+    setTimeout(function(){ m.invalidateSize(); }, 300);
+  })();
+  </script>
+
+
+<div class="section-rule"></div>
+<div class="wrap" id="contact">
+  <div class="contact-inner">
+    <div class="contact-heading">Let&#8217;s work<br><span>together.</span></div>
+    <div class="contact-links">
+      <a href="mailto:yangchh@pm.me" class="btn btn-fill">yangchh@pm.me</a>
+      <a href="https://github.com/yangchh17" class="btn btn-ghost" target="_blank">GitHub</a>
+      <a href="https://www.linkedin.com/in/yangchh/" class="btn btn-ghost" target="_blank">LinkedIn</a>
+    </div>
+  </div>
+</div>
+
+<footer>&#169; 2025 Chenghao Yang &nbsp;&middot;&nbsp; Vancouver, BC &nbsp;&middot;&nbsp; Built with GitHub Pages</footer>
+</body>
+</html>
