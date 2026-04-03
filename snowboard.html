@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>On Snow — Chenghao Yang</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+  --bg:        #ffffff;
+  --bg-off:    #f8f4ee;
+  --bg-muted:  #f1ebe0;
+  --border:    #e8e0d4;
+  --border-m:  #d8cfc0;
+  --accent:    #d44820;
+  --accent-2:  #c8880a;
+  --text:      #18120a;
+  --text-2:    #4a3828;
+  --text-3:    #9a8878;
+  --mono: 'DM Mono', monospace;
+  --syne: 'Syne', sans-serif;
+  --sans: 'DM Sans', sans-serif;
+}
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      overflow-x: hidden;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+    }
+
+    /* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 56px;
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--text); letter-spacing: .05em; text-decoration: none;
+  flex-shrink: 0;
+}
+.nav-logo span { color: var(--accent); }
+.nav-right { display: flex; align-items: center; gap: 0; }
+.nav-home {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .14em; text-transform: uppercase; text-decoration: none;
+  padding: 0 14px; height: 52px; display: flex; align-items: center;
+  transition: color .16s; border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+.nav-home:hover { color: var(--accent); }
+.nav-menu-trigger {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .14em; text-transform: uppercase;
+  padding: 0 16px; height: 52px; display: flex; align-items: center; gap: 6px;
+  cursor: pointer; background: none; border: none;
+  transition: color .16s; white-space: nowrap;
+}
+.nav-menu-trigger:hover { color: var(--accent); }
+.nav-chevron { font-size: 7px; display: inline-block; transition: transform .18s; }
+.nav-mega-item { position: static; }
+.nav-mega-item:hover .nav-chevron { transform: rotate(180deg); }
+.nav-mega-drop {
+  display: none;
+  position: fixed;
+  top: 52px; left: 0; right: 0;
+  background: var(--bg);
+  border-top: 2px solid var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding: 36px 56px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 48px;
+  z-index: 300;
+  box-shadow: 0 8px 32px rgba(0,0,0,.07);
+}
+.nav-mega-item:hover .nav-mega-drop { display: grid; }
+.mega-col { display: flex; flex-direction: column; }
+.mega-head {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--text); letter-spacing: .14em; text-transform: uppercase;
+  text-decoration: none; display: block;
+  padding-bottom: 10px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  transition: color .14s;
+}
+.mega-head:hover { color: var(--accent); }
+.mega-head + .mega-head { margin-top: 20px; }
+.mega-link {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  letter-spacing: .08em; text-decoration: none; display: block;
+  padding: 5px 0; transition: color .14s; cursor: pointer;
+  background: none; border: none; text-align: left; text-transform: none;
+}
+.mega-link:hover { color: var(--accent); }
+
+    /* ─── STRAVA WINDOW WRAPPER ─── */
+    .strava-section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 64px 56px 80px;
+      min-width: 0;
+    }
+    .strava-window-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-3);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .strava-window-label span { color: var(--accent); margin-right: 6px; }
+
+    /* ─── FRAMED WINDOW ─── */
+    .strava-layout {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      width: 100%;
+      height: 580px;
+      border: 1px solid var(--border-m);
+      border-top: 2px solid var(--accent);
+      overflow: hidden;
+      box-shadow: 0 4px 32px rgba(24,18,10,0.07);
+      isolation: isolate;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── LEFT: ACTIVITY PANEL ── */
+    .strava-panel {
+      overflow-y: auto;
+      background: var(--bg-off);
+      border-right: 1.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      padding: 20px 24px 14px;
+      border-bottom: 1.5px solid var(--border);
+    }
+    .panel-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--accent);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .panel-title {
+      font-family: var(--syne);
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+    .panel-subtitle {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      margin-top: 5px;
+    }
+
+    /* Season summary stats */
+    .season-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border-bottom: 1.5px solid var(--border);
+    }
+    .stat-cell {
+      background: var(--bg-off);
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .stat-val {
+      font-family: var(--syne);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+
+    /* Activity list — fills remaining panel height */
+    .activity-list {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    .activity-list::-webkit-scrollbar { width: 4px; }
+    .activity-list::-webkit-scrollbar-thumb { background: var(--border); }
+    .activity-item {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .activity-item:hover { background: var(--bg-muted); }
+    .activity-item.active { background: var(--bg-muted); border-left: 3px solid var(--accent); }
+    .activity-dot {
+      width: 8px; height: 8px;
+      background: #4a90c4;
+      flex-shrink: 0;
+    }
+    .activity-info { flex: 1; min-width: 0; }
+    .activity-name {
+      font-family: var(--syne);
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .activity-meta {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-3);
+      letter-spacing: 0.04em;
+      margin-top: 2px;
+    }
+    .activity-speed {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* Selected run detail */
+    .run-detail {
+      padding: 16px 24px;
+      border-top: 1.5px solid var(--border);
+      display: none;
+    }
+    .run-detail.visible { display: block; }
+    .run-detail-title {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+    .run-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .metric {
+      background: var(--bg-muted);
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+    }
+    .metric-val {
+      font-family: var(--syne);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .metric-lbl {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Status bar at bottom of panel */
+    .panel-status {
+      padding: 8px 24px;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #28a745;
+      flex-shrink: 0;
+    }
+    .status-dot.loading { background: #c8880a; animation: pulse 1s infinite; }
+    .status-dot.error { background: var(--accent); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* Auth panel — inline inside strava-panel */
+    .auth-panel {
+      padding: 32px 24px;
+      text-align: center;
+      background: var(--bg-off);
+    }
+    .auth-title {
+      font-family: var(--syne);
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .auth-desc {
+      font-size: 13px;
+      color: var(--text-3);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .btn-strava {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #FC4C02;
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 14px 28px;
+      text-decoration: none;
+      transition: background 0.15s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-strava:hover { background: #e04302; }
+    .btn-strava svg { width: 18px; height: 18px; fill: currentColor; }
+
+    /* ── RIGHT: MAP COLUMN ── */
+    .strava-map-col {
+      position: relative;
+      min-width: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Map info overlay — top of map, shown when a run is selected */
+    .map-info-bar {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(248,244,238,0.96);
+      border-bottom: 1.5px solid var(--border);
+      padding: 10px 18px;
+      align-items: center;
+      gap: 0;
+    }
+    .map-info-bar.visible { display: flex; }
+    .map-info-resort {
+      font-family: var(--syne);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-right: 16px;
+      flex-shrink: 0;
+    }
+    .map-info-date {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      margin-right: 20px;
+      flex-shrink: 0;
+    }
+    .map-info-metrics {
+      display: flex;
+      gap: 1px;
+      flex: 1;
+    }
+    .map-info-metric {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      min-width: 64px;
+    }
+    .map-info-val {
+      font-family: var(--syne);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .map-info-lbl {
+      font-family: var(--mono);
+      font-size: 7px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      bottom: 28px;
+      left: 28px;
+      z-index: 100;
+      background: rgba(248,244,238,0.95);
+      border: 1.5px solid var(--border);
+      padding: 10px 14px;
+    }
+    .legend-title {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-3);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .legend-swatch {
+      width: 80px; height: 6px;
+    }
+    .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      width: 80px;
+    }
+    .legend-label {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 16px; }
+      .strava-section { padding: 48px 24px 64px; }
+      .strava-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 320px 360px;
+        height: auto;
+      }
+      .strava-panel { border-right: none; border-bottom: 1.5px solid var(--border); }
+      .strava-map-col { height: 360px; }
+      .legend { bottom: 12px; left: 12px; }
+    }
+
+  /* ─── FOOTER ─── */
+footer {
+  text-align: center; padding: 22px 56px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 9px; color: var(--text-3); letter-spacing: .08em;
+}
+
+/* ─── CONTACT ─── */
+.contact-inner { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+.contact-heading { font-family: var(--syne); font-size: clamp(26px,3.2vw,40px); font-weight: 800; color: var(--text); line-height: 1.1; }
+.contact-heading span { color: var(--accent); }
+.contact-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 80px 56px; }
+.section-rule { border: none; border-top: 1px solid var(--border); margin: 0 56px; }
+.btn { display: inline-flex; align-items: center; padding: 10px 20px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; border: 1px solid; transition: background .16s, color .16s; cursor: pointer; }
+.btn-fill { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-fill:hover { background: #b83612; border-color: #b83612; }
+.btn-ghost { background: transparent; color: var(--text); border-color: var(--border-m); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+  <a href="index.html" class="nav-logo">yang<span>.spatial</span></a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-home">Home</a>
+    <div class="nav-mega-item">
+      <button class="nav-menu-trigger">Menu <span class="nav-chevron">&#9660;</span></button>
+      <div class="nav-mega-drop">
+        <div class="mega-col">
+          <a href="index.html#case-studies" class="mega-head">Work</a>
+          <a href="asset-monitoring.html" class="mega-link">Asset Management</a>
+          <a href="bioregional-atlas.html" class="mega-link">Bioregional Atlas</a>
+          <a href="stockpile-volume.html" class="mega-link">Stockpile Volume</a>
+        </div>
+        <div class="mega-col">
+          <a href="index.html#wiww" class="mega-head">Capabilities</a>
+          <a href="airport-ols.html" class="mega-link">Airport OLS &amp; Hazard Detection</a>
+          <a href="terrain-modeling.html" class="mega-link">Terrain Modeling</a>
+          <a href="hydrological-assessment.html" class="mega-link">Hydrological Assessment</a>
+          <a href="etl-geodatabase.html" class="mega-link">Geospatial ETL</a>
+        </div>
+        <div class="mega-col">
+          <a href="index.html#stack" class="mega-head">Stack</a>
+          <a href="index.html#about" class="mega-head">About</a>
+          <button class="mega-link" onclick="downloadCV(event)">Download CV &#8595;</button>
+        </div>
+        <div class="mega-col">
+          <a href="index.html#offpiste" class="mega-head">Off-piste</a>
+          <a href="snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
+          <a href="#contact" class="mega-head">Contact</a>
+          <a href="mailto:yangchh@pm.me" class="mega-link">yangchh@pm.me</a>
+          <a href="https://github.com/yangchh17" class="mega-link" target="_blank">GitHub</a>
+          <a href="https://www.linkedin.com/in/yangchh/" class="mega-link" target="_blank">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+  <!-- HERO SECTION -->
+  <div style="padding: 140px 56px 64px; border-bottom: 1px solid var(--border); max-width: 1200px; margin: 0 auto;">
+    <div style="font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 16px;">Off-piste / Personal</div>
+    <h1 style="font-family: var(--syne); font-size: clamp(32px,5vw,56px); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 24px;">Riding the <span style="color: var(--accent);">Mountains</span></h1>
+    <p style="font-size: 16px; color: var(--text-2); max-width: 640px; line-height: 1.8;">GPS tracks, speed heatmaps, and vertical drop statistics from Whistler, Big White, and beyond &mdash; pulled live from Strava. Each run visualized as a colour-coded speed heatmap over topographic terrain.</p>
+  </div>
+
+  <!-- STRAVA VIEWER SECTION -->
+  <div class="strava-section">
+    <div class="strava-window-label"><span>//</span> Strava Live &mdash; Snowboard Sessions</div>
+  <div class="strava-layout">
+
+    <!-- LEFT: Activity panel -->
+    <div class="strava-panel" id="mainPanel">
+
+      <div class="panel-header">
+        <div class="panel-label">// Personal &middot; Strava</div>
+        <div class="panel-title">On Snow</div>
+        <div class="panel-subtitle" id="seasonLabel">Snowboard Sessions &mdash; Loading...</div>
+      </div>
+
+      <div class="season-stats">
+        <div class="stat-cell">
+          <div class="stat-val" id="statRuns">&mdash;</div>
+          <div class="stat-lbl">Runs</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-val" id="statVertical">&mdash;</div>
+          <div class="stat-lbl">Vert (m)</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-val" id="statMaxSpeed">&mdash;</div>
+          <div class="stat-lbl">Max km/h</div>
+        </div>
+      </div>
+
+      <div class="activity-list" id="activityList">
+        <div style="padding:20px 24px; font-family:var(--mono); font-size:10px; color:var(--text-3);">
+          Loading activities...
+        </div>
+      </div>
+
+      <div class="panel-status">
+        <div class="status-dot loading" id="statusDot"></div>
+        <span id="statusText">Loading sessions...</span>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Map -->
+    <div class="strava-map-col">
+      <div id="map" style="width:100%; height:100%;"></div>
+
+      <!-- Info bar: shown when a run is selected -->
+      <div class="map-info-bar" id="mapInfoBar">
+        <div class="map-info-resort" id="infoResort"></div>
+        <div class="map-info-date" id="infoDate"></div>
+        <div class="map-info-metrics">
+          <div class="map-info-metric"><div class="map-info-val" id="infoDist"></div><div class="map-info-lbl">km</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoVert"></div><div class="map-info-lbl">vert m</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoMax"></div><div class="map-info-lbl">max km/h</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoAvg"></div><div class="map-info-lbl">avg km/h</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoDur"></div><div class="map-info-lbl">duration</div></div>
+        </div>
+      </div>
+
+      <!-- Speed legend -->
+      <div class="legend">
+        <div class="legend-title">Speed heatmap</div>
+        <div class="legend-row">
+          <div class="legend-swatch" style="background:linear-gradient(to right,#4575b4,#74add1,#abd9e9,#fee090,#f46d43,#d73027)"></div>
+        </div>
+        <div class="legend-labels">
+          <span class="legend-label">0 km/h</span>
+          <span class="legend-label" id="legendMax">— km/h</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.strava-layout -->
+  </div><!-- /.strava-section -->
+
+  <!-- SCRIPTS -->
+  <script>
+  let map, activePolylines = [], allFeatures = [], selectedId = null;
+
+  // Initialize map
+  map = L.map('map', { zoomControl: false, attributionControl: false })
+    .setView([50.1, -122.9], 9);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains: 'abcd'
+  }).addTo(map);
+
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  setTimeout(function () { map.invalidateSize(); }, 300);
+
+  // ─── INIT ─────────────────────────────────────────────────────────────
+  async function init() {
+    setStatus('loading', 'Loading sessions...');
+    try {
+      const resp = await fetch('Data/snowboard-runs.geojson');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const geojson = await resp.json();
+      allFeatures = geojson.features;
+
+      renderSummary(allFeatures);
+      renderActivityList(allFeatures);
+
+      setStatus('ok', `${allFeatures.length} sessions loaded`);
+    } catch(e) {
+      console.error(e);
+      setStatus('error', 'Could not load snowboard-runs.geojson');
+    }
+  }
+
+  // ─── RENDER SUMMARY ──────────────────────────────────────────────────
+  function renderSummary(features) {
+    const totalVert  = features.reduce((s, f) => s + (f.properties.vert_m || 0), 0);
+    const maxSpeed   = Math.max(...features.map(f => f.properties.max_speed_kmh || 0));
+
+    document.getElementById('statRuns').textContent     = features.length;
+    document.getElementById('statVertical').textContent = Math.round(totalVert).toLocaleString();
+    document.getElementById('statMaxSpeed').textContent = Math.round(maxSpeed);
+
+    if (features.length) {
+      const years = features.map(f => parseInt(f.properties.date));
+      const minY   = Math.min(...features.map(f => parseInt(f.properties.date.slice(0,4))));
+      const maxY   = Math.max(...features.map(f => parseInt(f.properties.date.slice(0,4))));
+      document.getElementById('seasonLabel').textContent =
+        minY === maxY ? `Season ${minY}` : `Seasons ${minY}–${maxY}`;
+    }
+  }
+
+  // ─── RENDER ACTIVITY LIST ─────────────────────────────────────────────
+  function renderActivityList(features) {
+    const list = document.getElementById('activityList');
+    list.innerHTML = '';
+
+    features.forEach(f => {
+      const p    = f.properties;
+      const date = new Date(p.date + 'T12:00:00').toLocaleDateString('en-CA', {month:'short', day:'numeric', year:'numeric'});
+      const dur  = formatDuration(p.duration_min * 60);
+
+      const item = document.createElement('div');
+      item.className   = 'activity-item';
+      item.dataset.id  = p.id;
+      item.innerHTML   = `
+        <div class="activity-dot"></div>
+        <div class="activity-info">
+          <div class="activity-name">${p.resort}</div>
+          <div class="activity-meta">${date} · ${p.distance_km.toFixed(1)}km · ${Math.round(p.vert_m)}m vert · ${dur}</div>
+        </div>
+        <div class="activity-speed">${Math.round(p.max_speed_kmh)}<span style="font-size:9px;font-weight:300"> km/h</span></div>
+      `;
+      item.addEventListener('click', () => selectFeature(f, item));
+      list.appendChild(item);
+    });
+  }
+
+  // ─── SELECT FEATURE ───────────────────────────────────────────────────
+  function selectFeature(f, itemEl) {
+    document.querySelectorAll('.activity-item').forEach(el => el.classList.remove('active'));
+    itemEl.classList.add('active');
+    selectedId = f.properties.id;
+
+    const p = f.properties;
+
+    // Update map info bar
+    const date = new Date(p.date + 'T12:00:00').toLocaleDateString('en-CA', {month:'short', day:'numeric', year:'numeric'});
+    document.getElementById('infoResort').textContent = p.resort;
+    document.getElementById('infoDate').textContent   = date;
+    document.getElementById('infoDist').textContent   = p.distance_km.toFixed(1);
+    document.getElementById('infoVert').textContent   = Math.round(p.vert_m).toLocaleString();
+    document.getElementById('infoMax').textContent    = Math.round(p.max_speed_kmh);
+    document.getElementById('infoAvg').textContent    = Math.round(p.avg_speed_kmh);
+    document.getElementById('infoDur').textContent    = formatDuration(p.duration_min * 60);
+    document.getElementById('mapInfoBar').classList.add('visible');
+
+    // Update legend max speed
+    document.getElementById('legendMax').textContent = Math.round(p.max_speed_kmh) + ' km/h';
+
+    // Clear all previous polylines
+    activePolylines.forEach(p => map.removeLayer(p.poly));
+    activePolylines = [];
+
+    // Draw only selected track with speed heatmap
+    drawTrack(f);
+
+    // Fit to track bounds, capped zoom so it stays at mountain level
+    const coords = f.geometry.coordinates.map(c => [c[1], c[0]]);
+    if (coords.length) {
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [52, 24], maxZoom: 14 });
+    }
+  }
+
+  // ─── DRAW TRACK ───────────────────────────────────────────────────────
+  function drawTrack(f) {
+    const p      = f.properties;
+    const coords = f.geometry.coordinates.map(c => [c[1], c[0]]);
+    const speeds = p.speeds || [];
+    const maxSpd = Math.max(...speeds, 1);
+
+    for (let i = 1; i < coords.length; i++) {
+      const color = speedColor(speeds[i] || 0, maxSpd);
+      const seg   = L.polyline([coords[i-1], coords[i]], {
+        color, weight: 4, opacity: 0.9
+      }).addTo(map);
+      activePolylines.push({ id: p.id, poly: seg });
+    }
+  }
+
+  // ─── HELPERS ─────────────────────────────────────────────────────────
+  function speedColor(speed, maxSpeed) {
+    const ratio = Math.min(speed / Math.max(maxSpeed, 1), 1);
+    const stops = [
+      [0,    [69,  117, 180]],
+      [0.25, [116, 173, 209]],
+      [0.50, [171, 217, 233]],
+      [0.70, [254, 224, 144]],
+      [0.85, [244, 109,  67]],
+      [1.0,  [215,  48,  39]]
+    ];
+    for (let i = 1; i < stops.length; i++) {
+      if (ratio <= stops[i][0]) {
+        const t = (ratio - stops[i-1][0]) / (stops[i][0] - stops[i-1][0]);
+        const [r1,g1,b1] = stops[i-1][1], [r2,g2,b2] = stops[i][1];
+        return `rgb(${Math.round(r1+(r2-r1)*t)},${Math.round(g1+(g2-g1)*t)},${Math.round(b1+(b2-b1)*t)})`;
+      }
+    }
+    return 'rgb(215,48,39)';
+  }
+
+  function formatDuration(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
+
+  function setStatus(type, text) {
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    dot.className = 'status-dot' + (type !== 'ok' ? ' ' + type : '');
+    txt.textContent = text;
+  }
+
+  // ─── KICK OFF ────────────────────────────────────────────────────────
+  init();
+  </script>
+
+
+<div class="section-rule"></div>
+<div class="wrap" id="contact">
+  <div class="contact-inner">
+    <div class="contact-heading">Let&#8217;s work<br><span>together.</span></div>
+    <div class="contact-links">
+      <a href="mailto:yangchh@pm.me" class="btn btn-fill">yangchh@pm.me</a>
+      <a href="https://github.com/yangchh17" class="btn btn-ghost" target="_blank">GitHub</a>
+      <a href="https://www.linkedin.com/in/yangchh/" class="btn btn-ghost" target="_blank">LinkedIn</a>
+    </div>
+  </div>
+</div>
+
+<footer>&#169; 2025 Chenghao Yang &nbsp;&middot;&nbsp; Vancouver, BC &nbsp;&middot;&nbsp; Built with GitHub Pages</footer>
+</body>
+</html>
