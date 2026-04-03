@@ -643,7 +643,7 @@ footer {
   async function init() {
     setStatus('loading', 'Loading sessions...');
     try {
-      const resp = await fetch('Data/snowboard-runs.geojson');
+      const resp = await fetch('asset/snowboard-runs.geojson');
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const geojson = await resp.json();
       allFeatures = geojson.features;
@@ -654,7 +654,7 @@ footer {
       setStatus('ok', `${allFeatures.length} sessions loaded`);
     } catch(e) {
       console.error(e);
-      setStatus('error', 'Could not load snowboard-runs.geojson');
+      setStatus('error', 'Could not load snowboard-runs.geojson — check path');
     }
   }
 
