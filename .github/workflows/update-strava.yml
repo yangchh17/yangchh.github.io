@@ -1,0 +1,54 @@
+name: Update Snowboard Data
+
+on:
+  schedule:
+    # Every Monday at 09:00 UTC (runs year-round, date check below skips off-season)
+    - cron: "0 9 * * 1"
+  workflow_dispatch:  # allow manual trigger any time from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if ski season
+        id: season_check
+        run: |
+          MONTH=$(date +%-m)
+          if [ "$MONTH" -ge 11 ] || [ "$MONTH" -le 4 ]; then
+            echo "in_season=true" >> $GITHUB_OUTPUT
+          else
+            echo "in_season=false" >> $GITHUB_OUTPUT
+            echo "Off-season (month $MONTH), skipping update."
+          fi
+
+      - name: Checkout repo
+        if: steps.season_check.outputs.in_season == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: steps.season_check.outputs.in_season == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        if: steps.season_check.outputs.in_season == 'true'
+        run: pip install requests python-dotenv
+
+      - name: Run Strava update
+        if: steps.season_check.outputs.in_season == 'true'
+        env:
+          STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+          STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+          STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
+        run: python update_strava.py
+
+      - name: Commit and push if data changed
+        if: steps.season_check.outputs.in_season == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add asset/snowboard-runs.geojson
+          git diff --cached --quiet || git commit -m "Auto-update snowboard data"
+          git push
