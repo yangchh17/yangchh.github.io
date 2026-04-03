@@ -832,16 +832,24 @@ footer {
 }());
 </script>
 
-<!-- ── CV ── -->
+<!-- CV Download -->
 <script>
 function downloadCV(e) {
   e.preventDefault();
-  var l = document.createElement('a');
-  l.href = 'cv.pdf';
-  l.download = 'Chenghao_Yang_CV.pdf';
-  document.body.appendChild(l);
-  l.click();
-  document.body.removeChild(l);
+
+  // Create a temporary link
+  var link = document.createElement('a');
+  
+  // Correct path to your CV (this was the missing part)
+  link.href = 'asset/cv.pdf';
+  
+  // Suggested filename when user downloads it
+  link.download = 'Chenghao_Yang_CV.pdf';
+  
+  // Trigger the download
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 </script>
 </body>
