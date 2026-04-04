@@ -644,19 +644,25 @@ footer {
     <div class="strava-map-col">
       <div id="map" style="width:100%; height:100%;"></div>
 
-      <!-- Title bar: top of map -->
+      <!-- Title + metrics bar: top of map, shown when a run is selected -->
       <div class="map-info-bar" id="mapInfoBar">
-        <div class="map-info-resort" id="infoResort"></div>
-        <div class="map-info-date" id="infoDate"></div>
+        <div class="map-info-top">
+          <div class="map-info-resort" id="infoResort"></div>
+          <div class="map-info-date" id="infoDate"></div>
+        </div>
+        <div class="map-metrics-row">
+          <div class="map-info-metric"><div class="map-info-val" id="infoDist"></div><div class="map-info-lbl">km</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoVert"></div><div class="map-info-lbl">vert m</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoMax"></div><div class="map-info-lbl">max km/h</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoAvg"></div><div class="map-info-lbl">avg km/h</div></div>
+          <div class="map-info-metric"><div class="map-info-val" id="infoDur"></div><div class="map-info-lbl">duration</div></div>
+        </div>
       </div>
 
-      <!-- Metrics bar: bottom of map -->
-      <div class="map-metrics-bar" id="mapMetricsBar">
-        <div class="map-info-metric"><div class="map-info-val" id="infoDist"></div><div class="map-info-lbl">km</div></div>
-        <div class="map-info-metric"><div class="map-info-val" id="infoVert"></div><div class="map-info-lbl">vert m</div></div>
-        <div class="map-info-metric"><div class="map-info-val" id="infoMax"></div><div class="map-info-lbl">max km/h</div></div>
-        <div class="map-info-metric"><div class="map-info-val" id="infoAvg"></div><div class="map-info-lbl">avg km/h</div></div>
-        <div class="map-info-metric"><div class="map-info-val" id="infoDur"></div><div class="map-info-lbl">duration</div></div>
+      <!-- Basemap toggle -->
+      <div class="map-style-toggle">
+        <button class="style-btn" id="btnSat" onclick="setMapStyle('sat')">SAT</button>
+        <button class="style-btn active" id="btnTopo" onclick="setMapStyle('topo')">TOPO</button>
       </div>
 
       <!-- Speed legend: floating bottom-right -->
@@ -682,9 +688,15 @@ footer {
   // ─── MAP INIT ────────────────────────────────────────────────────────
   mapboxgl.accessToken = 'pk.eyJ1IjoiY2hoeWFuZzE3IiwiYSI6ImNtbmptOTM1YzBxOXcycW9hcmphNmJybW4ifQ.dUtWht-weoeupbNtPtluOw';
 
+  const STYLES = {
+    sat:  'mapbox://styles/mapbox/satellite-streets-v12',
+    topo: 'mapbox://styles/mapbox/outdoors-v12'
+  };
+  let currentStyle = 'sat';
+
   const map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/outdoors-v12',
+    style: STYLES.sat,
     center: [-122.9, 50.1],
     zoom: 9,
     pitch: 55,
@@ -694,7 +706,7 @@ footer {
 
   map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
 
-  map.on('load', () => {
+  function addMapLayers() {
     map.addSource('mapbox-dem', {
       type: 'raster-dem',
       url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
@@ -724,10 +736,29 @@ footer {
         ]
       }
     });
+  }
 
+  map.on('load', () => {
+    addMapLayers();
     mapReady = true;
     if (pendingDraw) { drawTrack(pendingDraw); pendingDraw = null; }
   });
+
+  function setMapStyle(style) {
+    if (style === currentStyle) return;
+    currentStyle = style;
+    mapReady = false;
+    // remember current track to redraw after style loads
+    const redraw = selectedId ? allFeatures.find(f => f.properties.id === selectedId) : null;
+    map.setStyle(STYLES[style]);
+    map.once('style.load', () => {
+      addMapLayers();
+      mapReady = true;
+      if (redraw) drawTrack(redraw);
+    });
+    document.getElementById('btnSat').classList.toggle('active', style === 'sat');
+    document.getElementById('btnTopo').classList.toggle('active', style === 'topo');
+  }
 
   // ─── INIT ─────────────────────────────────────────────────────────────
   async function init() {
@@ -827,7 +858,6 @@ footer {
     document.getElementById('infoAvg').textContent    = Math.round(p.avg_speed_kmh);
     document.getElementById('infoDur').textContent    = formatDuration(p.duration_min * 60);
     document.getElementById('mapInfoBar').classList.add('visible');
-    document.getElementById('mapMetricsBar').classList.add('visible');
 
     // Update legend max speed
     document.getElementById('legendMax').textContent = Math.round(p.max_speed_kmh) + ' km/h';
