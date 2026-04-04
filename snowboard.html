@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>On Snow — Chenghao Yang</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 
   <style>
@@ -450,8 +450,9 @@ nav {
       align-self: center;
     }
 
-    /* Push zoom controls below the title bar */
-    #map .leaflet-top.leaflet-right { top: 56px; }
+    /* Push MapboxGL controls below the title bar */
+    #map .mapboxgl-ctrl-top-right { top: 60px; }
+    #map .mapboxgl-ctrl-top-right .mapboxgl-ctrl { margin: 0 10px 10px 0; }
 
     /* Legend — floating bottom-right of map */
     .legend {
@@ -655,20 +656,58 @@ footer {
 
   <!-- SCRIPTS -->
   <script>
-  let map, activePolylines = [], allFeatures = [], selectedId = null;
-  let sortBy = 'date';
+  let allFeatures = [], selectedId = null, sortBy = 'date';
+  let mapReady = false, pendingDraw = null;
 
-  // Initialize map
-  map = L.map('map', { zoomControl: false, attributionControl: false })
-    .setView([50.1, -122.9], 9);
+  // ─── MAP INIT ────────────────────────────────────────────────────────
+  mapboxgl.accessToken = 'pk.eyJ1IjoiY2hoeWFuZzE3IiwiYSI6ImNtbmptOTM1YzBxOXcycW9hcmphNmJybW4ifQ.dUtWht-weoeupbNtPtluOw';
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19, subdomains: 'abcd'
-  }).addTo(map);
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/outdoors-v12',
+    center: [-122.9, 50.1],
+    zoom: 9,
+    pitch: 55,
+    bearing: -15,
+    antialias: true
+  });
 
-  L.control.zoom({ position: 'topright' }).addTo(map);
+  map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
 
-  setTimeout(function () { map.invalidateSize(); }, 300);
+  map.on('load', () => {
+    map.addSource('mapbox-dem', {
+      type: 'raster-dem',
+      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+      tileSize: 512, maxzoom: 14
+    });
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+
+    map.addLayer({ id: 'sky', type: 'sky', paint: {
+      'sky-type': 'atmosphere',
+      'sky-atmosphere-sun': [0.0, 0.0],
+      'sky-atmosphere-sun-intensity': 15
+    }});
+
+    map.addSource('run-track', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    map.addLayer({
+      id: 'run-track', type: 'line', source: 'run-track',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-width': 3, 'line-opacity': 0.92,
+        'line-color': ['interpolate', ['linear'], ['get', 'speed'],
+          0, '#4575b4', 15, '#74add1', 25, '#abd9e9',
+          35, '#fee090', 50, '#f46d43', 70, '#d73027'
+        ]
+      }
+    });
+
+    mapReady = true;
+    if (pendingDraw) { drawTrack(pendingDraw); pendingDraw = null; }
+  });
 
   // ─── INIT ─────────────────────────────────────────────────────────────
   async function init() {
@@ -773,56 +812,34 @@ footer {
     // Update legend max speed
     document.getElementById('legendMax').textContent = Math.round(p.max_speed_kmh) + ' km/h';
 
-    // Clear all previous polylines
-    activePolylines.forEach(p => map.removeLayer(p.poly));
-    activePolylines = [];
-
-    // Draw only selected track with speed heatmap
+    // Draw selected track with speed heatmap
     drawTrack(f);
 
-    // Fit to track bounds, capped zoom so it stays at mountain level
-    const coords = f.geometry.coordinates.map(c => [c[1], c[0]]);
-    if (coords.length) {
-      const bounds = L.latLngBounds(coords);
-      map.fitBounds(bounds, { padding: [52, 24], maxZoom: 14 });
+    // Fit to track bounds
+    const coords2d = f.geometry.coordinates.map(c => [c[0], c[1]]);
+    if (coords2d.length) {
+      const bounds = coords2d.reduce(
+        (b, c) => b.extend(c),
+        new mapboxgl.LngLatBounds(coords2d[0], coords2d[0])
+      );
+      map.fitBounds(bounds, { padding: 60, pitch: 55, bearing: -15, maxZoom: 15, duration: 1200 });
     }
   }
 
   // ─── DRAW TRACK ───────────────────────────────────────────────────────
   function drawTrack(f) {
-    const p      = f.properties;
-    const coords = f.geometry.coordinates.map(c => [c[1], c[0]]);
-    const speeds = p.speeds || [];
-    const maxSpd = Math.max(...speeds, 1);
-
+    if (!mapReady) { pendingDraw = f; return; }
+    const coords = f.geometry.coordinates;
+    const speeds = f.properties.speeds || [];
+    const segments = [];
     for (let i = 1; i < coords.length; i++) {
-      const color = speedColor(speeds[i] || 0, maxSpd);
-      const seg   = L.polyline([coords[i-1], coords[i]], {
-        color, weight: 4, opacity: 0.9
-      }).addTo(map);
-      activePolylines.push({ id: p.id, poly: seg });
+      segments.push({
+        type: 'Feature',
+        properties: { speed: speeds[i] || 0 },
+        geometry: { type: 'LineString', coordinates: [coords[i-1], coords[i]] }
+      });
     }
-  }
-
-  // ─── HELPERS ─────────────────────────────────────────────────────────
-  function speedColor(speed, maxSpeed) {
-    const ratio = Math.min(speed / Math.max(maxSpeed, 1), 1);
-    const stops = [
-      [0,    [69,  117, 180]],
-      [0.25, [116, 173, 209]],
-      [0.50, [171, 217, 233]],
-      [0.70, [254, 224, 144]],
-      [0.85, [244, 109,  67]],
-      [1.0,  [215,  48,  39]]
-    ];
-    for (let i = 1; i < stops.length; i++) {
-      if (ratio <= stops[i][0]) {
-        const t = (ratio - stops[i-1][0]) / (stops[i][0] - stops[i-1][0]);
-        const [r1,g1,b1] = stops[i-1][1], [r2,g2,b2] = stops[i][1];
-        return `rgb(${Math.round(r1+(r2-r1)*t)},${Math.round(g1+(g2-g1)*t)},${Math.round(b1+(b2-b1)*t)})`;
-      }
-    }
-    return 'rgb(215,48,39)';
+    map.getSource('run-track').setData({ type: 'FeatureCollection', features: segments });
   }
 
   function formatDuration(seconds) {
