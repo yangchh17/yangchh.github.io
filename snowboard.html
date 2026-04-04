@@ -186,12 +186,12 @@ nav {
     }
     .stat-cell {
       background: var(--bg-off);
-      padding: 8px 12px;
+      padding: 5px 12px;
       text-align: center;
     }
     .stat-val {
       font-family: var(--syne);
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--accent);
       line-height: 1;
@@ -231,6 +231,12 @@ nav {
       flex-shrink: 0;
     }
     .activity-info { flex: 1; min-width: 0; }
+    .activity-name-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
     .activity-name {
       font-family: var(--syne);
       font-size: 13px;
@@ -240,6 +246,7 @@ nav {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      min-width: 0;
     }
     .activity-meta {
       font-family: var(--mono);
@@ -247,14 +254,14 @@ nav {
       color: var(--text-3);
       letter-spacing: 0.04em;
       margin-top: 2px;
+      white-space: nowrap;
     }
     .activity-speed {
       font-family: var(--mono);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--accent);
       flex-shrink: 0;
-      margin-top: 1px;
     }
 
     /* Selected run detail */
@@ -384,7 +391,7 @@ nav {
       border-bottom: 1px solid rgba(255,255,255,0.12);
       align-items: baseline;
       gap: 10px;
-      padding: 10px 14px;
+      padding: 16px 18px;
     }
     .map-info-bar.visible { display: flex; }
     .map-info-resort {
@@ -734,10 +741,14 @@ footer {
       id: 'run-track', type: 'line', source: 'run-track',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
       paint: {
-        'line-width': 3, 'line-opacity': 0.92,
-        'line-color': ['interpolate', ['linear'], ['get', 'speed'],
-          0, '#4575b4', 15, '#74add1', 25, '#abd9e9',
-          35, '#fee090', 50, '#f46d43', 70, '#d73027'
+        'line-width': ['case', ['==', ['get', 'lift'], 1], 2, 3],
+        'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.6, 0.92],
+        'line-color': ['case',
+          ['==', ['get', 'lift'], 1], '#222222',
+          ['interpolate', ['linear'], ['get', 'speed'],
+            0, '#4575b4', 15, '#74add1', 25, '#abd9e9',
+            35, '#fee090', 50, '#f46d43', 70, '#d73027'
+          ]
         ]
       }
     });
@@ -832,10 +843,12 @@ footer {
       item.innerHTML  = `
         <div class="activity-dot"></div>
         <div class="activity-info">
-          <div class="activity-name">${p.resort}</div>
+          <div class="activity-name-row">
+            <div class="activity-name">${p.resort}</div>
+            <div class="activity-speed">${Math.round(p.max_speed_kmh)}<span style="font-size:9px;font-weight:300"> km/h</span></div>
+          </div>
           <div class="activity-meta">${date} · ${p.distance_km.toFixed(1)}km · ${Math.round(p.vert_m)}m vert · ${dur}</div>
         </div>
-        <div class="activity-speed">${Math.round(p.max_speed_kmh)}<span style="font-size:9px;font-weight:300"> km/h</span></div>
       `;
       item.addEventListener('click', () => selectFeature(f, item));
       list.appendChild(item);
@@ -884,11 +897,17 @@ footer {
     if (!mapReady) { pendingDraw = f; return; }
     const coords = f.geometry.coordinates;
     const speeds = f.properties.speeds || [];
+    const WIN = 5; // rolling window for altitude trend
     const segments = [];
     for (let i = 1; i < coords.length; i++) {
+      // net altitude change over surrounding window
+      const lo = Math.max(0, i - WIN);
+      const hi = Math.min(coords.length - 1, i + WIN);
+      const altDelta = (coords[hi][2] || 0) - (coords[lo][2] || 0);
+      const isLift = altDelta > 8; // >8m gain over window = lift
       segments.push({
         type: 'Feature',
-        properties: { speed: speeds[i] || 0 },
+        properties: { speed: speeds[i] || 0, lift: isLift ? 1 : 0 },
         geometry: { type: 'LineString', coordinates: [coords[i-1], coords[i]] }
       });
     }
