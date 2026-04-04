@@ -373,38 +373,64 @@ nav {
       height: 100%;
     }
 
-    /* Map title bar — top of map, shown when a run is selected */
+    /* Map title bar — top of map, full-width, always shown when run selected */
     .map-info-bar {
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0;
       z-index: 1000;
-      background: rgba(248,244,238,0.96);
-      border-bottom: 1.5px solid var(--border);
-      flex-direction: column;
+      background: rgba(20,14,8,0.82);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      align-items: baseline;
+      gap: 10px;
+      padding: 10px 14px;
     }
     .map-info-bar.visible { display: flex; }
-    .map-info-top {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      padding: 12px 18px 10px;
-      border-bottom: 1px solid var(--border);
-    }
     .map-info-resort {
       font-family: var(--syne);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
+      color: #fff;
     }
     .map-info-date {
       font-family: var(--mono);
       font-size: 9px;
-      color: var(--text-3);
+      color: rgba(255,255,255,0.5);
       letter-spacing: 0.08em;
     }
-    .map-metrics-row { display: flex; }
+
+    /* Floating metrics card — top-left, below title bar */
+    .map-metrics-card {
+      display: none;
+      position: absolute;
+      top: 40px;
+      left: 14px;
+      z-index: 1000;
+      background: rgba(20,14,8,0.82);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 14px;
+      min-width: 160px;
+    }
+    .map-metrics-card.visible { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+    .map-info-metric { display: flex; flex-direction: column; gap: 2px; }
+    .map-info-val {
+      font-family: var(--syne);
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .map-info-lbl {
+      font-family: var(--mono);
+      font-size: 7px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    /* duration spans full width on its own row */
+    .map-info-metric.full { grid-column: 1 / -1; }
 
     /* Basemap style toggle — bottom-left of map */
     .map-style-toggle {
@@ -413,7 +439,7 @@ nav {
       left: 16px;
       z-index: 1000;
       display: flex;
-      border: 1.5px solid var(--border-m);
+      border: 1px solid rgba(255,255,255,0.18);
       overflow: hidden;
     }
     .style-btn {
@@ -421,40 +447,14 @@ nav {
       font-size: 8px;
       letter-spacing: 0.1em;
       padding: 5px 10px;
-      background: rgba(248,244,238,0.95);
-      color: var(--text-3);
+      background: rgba(20,14,8,0.72);
+      color: rgba(255,255,255,0.55);
       border: none;
-      border-right: 1px solid var(--border);
+      border-right: 1px solid rgba(255,255,255,0.12);
       cursor: pointer;
     }
     .style-btn:last-child { border-right: none; }
     .style-btn.active { background: var(--accent); color: #fff; }
-
-    .map-info-metric {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: var(--bg-muted);
-      border-right: 1px solid var(--border);
-      padding: 7px 12px;
-      flex: 1;
-    }
-    .map-info-metric:last-child { border-right: none; }
-    .map-info-val {
-      font-family: var(--syne);
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1;
-    }
-    .map-info-lbl {
-      font-family: var(--mono);
-      font-size: 7px;
-      color: var(--text-3);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
 
     /* Sort select in panel header */
     .panel-title-row {
@@ -644,25 +644,26 @@ footer {
     <div class="strava-map-col">
       <div id="map" style="width:100%; height:100%;"></div>
 
-      <!-- Title + metrics bar: top of map, shown when a run is selected -->
+      <!-- Title bar: top of map -->
       <div class="map-info-bar" id="mapInfoBar">
-        <div class="map-info-top">
-          <div class="map-info-resort" id="infoResort"></div>
-          <div class="map-info-date" id="infoDate"></div>
-        </div>
-        <div class="map-metrics-row">
-          <div class="map-info-metric"><div class="map-info-val" id="infoDist"></div><div class="map-info-lbl">km</div></div>
-          <div class="map-info-metric"><div class="map-info-val" id="infoVert"></div><div class="map-info-lbl">vert m</div></div>
-          <div class="map-info-metric"><div class="map-info-val" id="infoMax"></div><div class="map-info-lbl">max km/h</div></div>
-          <div class="map-info-metric"><div class="map-info-val" id="infoAvg"></div><div class="map-info-lbl">avg km/h</div></div>
-          <div class="map-info-metric"><div class="map-info-val" id="infoDur"></div><div class="map-info-lbl">duration</div></div>
-        </div>
+        <div class="map-info-resort" id="infoResort"></div>
+        <div class="map-info-date" id="infoDate"></div>
+      </div>
+
+      <!-- Floating metrics card: top-left below title -->
+      <div class="map-metrics-card" id="mapMetricsCard">
+        <div class="map-info-metric"><div class="map-info-val" id="infoDist"></div><div class="map-info-lbl">km</div></div>
+        <div class="map-info-metric"><div class="map-info-val" id="infoVert"></div><div class="map-info-lbl">vert m</div></div>
+        <div class="map-info-metric"><div class="map-info-val" id="infoMax"></div><div class="map-info-lbl">max km/h</div></div>
+        <div class="map-info-metric"><div class="map-info-val" id="infoAvg"></div><div class="map-info-lbl">avg km/h</div></div>
+        <div class="map-info-metric full"><div class="map-info-val" id="infoDur"></div><div class="map-info-lbl">duration</div></div>
       </div>
 
       <!-- Basemap toggle -->
       <div class="map-style-toggle">
+        <button class="style-btn active" id="btnDark" onclick="setMapStyle('dark')">DARK</button>
+        <button class="style-btn" id="btnLight" onclick="setMapStyle('light')">LIGHT</button>
         <button class="style-btn" id="btnSat" onclick="setMapStyle('sat')">SAT</button>
-        <button class="style-btn active" id="btnTopo" onclick="setMapStyle('topo')">TOPO</button>
       </div>
 
       <!-- Speed legend: floating bottom-right -->
@@ -689,14 +690,15 @@ footer {
   mapboxgl.accessToken = 'pk.eyJ1IjoiY2hoeWFuZzE3IiwiYSI6ImNtbmptOTM1YzBxOXcycW9hcmphNmJybW4ifQ.dUtWht-weoeupbNtPtluOw';
 
   const STYLES = {
-    sat:  'mapbox://styles/mapbox/satellite-streets-v12',
-    topo: 'mapbox://styles/mapbox/outdoors-v12'
+    dark:  'mapbox://styles/mapbox/dark-v11',
+    light: 'mapbox://styles/mapbox/light-v11',
+    sat:   'mapbox://styles/mapbox/satellite-streets-v12'
   };
-  let currentStyle = 'sat';
+  let currentStyle = 'dark';
 
   const map = new mapboxgl.Map({
     container: 'map',
-    style: STYLES.sat,
+    style: STYLES.dark,
     center: [-122.9, 50.1],
     zoom: 9,
     pitch: 55,
@@ -756,8 +758,9 @@ footer {
       mapReady = true;
       if (redraw) drawTrack(redraw);
     });
+    document.getElementById('btnDark').classList.toggle('active', style === 'dark');
+    document.getElementById('btnLight').classList.toggle('active', style === 'light');
     document.getElementById('btnSat').classList.toggle('active', style === 'sat');
-    document.getElementById('btnTopo').classList.toggle('active', style === 'topo');
   }
 
   // ─── INIT ─────────────────────────────────────────────────────────────
@@ -858,6 +861,7 @@ footer {
     document.getElementById('infoAvg').textContent    = Math.round(p.avg_speed_kmh);
     document.getElementById('infoDur').textContent    = formatDuration(p.duration_min * 60);
     document.getElementById('mapInfoBar').classList.add('visible');
+    document.getElementById('mapMetricsCard').classList.add('visible');
 
     // Update legend max speed
     document.getElementById('legendMax').textContent = Math.round(p.max_speed_kmh) + ' km/h';
