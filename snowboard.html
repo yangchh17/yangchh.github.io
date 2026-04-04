@@ -381,11 +381,16 @@ nav {
       z-index: 1000;
       background: rgba(248,244,238,0.96);
       border-bottom: 1.5px solid var(--border);
-      align-items: baseline;
-      gap: 12px;
-      padding: 17px 18px;
+      flex-direction: column;
     }
     .map-info-bar.visible { display: flex; }
+    .map-info-top {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding: 12px 18px 10px;
+      border-bottom: 1px solid var(--border);
+    }
     .map-info-resort {
       font-family: var(--syne);
       font-size: 13px;
@@ -399,17 +404,32 @@ nav {
       color: var(--text-3);
       letter-spacing: 0.08em;
     }
+    .map-metrics-row { display: flex; }
 
-    /* Metrics bar — bottom of map, shown when a run is selected */
-    .map-metrics-bar {
-      display: none;
+    /* Basemap style toggle — bottom-left of map */
+    .map-style-toggle {
       position: absolute;
-      bottom: 0; left: 0; right: 0;
+      bottom: 16px;
+      left: 16px;
       z-index: 1000;
-      background: rgba(248,244,238,0.96);
-      border-top: 1.5px solid var(--border);
+      display: flex;
+      border: 1.5px solid var(--border-m);
+      overflow: hidden;
     }
-    .map-metrics-bar.visible { display: flex; }
+    .style-btn {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      padding: 5px 10px;
+      background: rgba(248,244,238,0.95);
+      color: var(--text-3);
+      border: none;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .style-btn:last-child { border-right: none; }
+    .style-btn.active { background: var(--accent); color: #fff; }
+
     .map-info-metric {
       display: flex;
       flex-direction: column;
@@ -457,7 +477,7 @@ nav {
     /* Legend — floating bottom-right of map */
     .legend {
       position: absolute;
-      bottom: 56px;
+      bottom: 16px;
       right: 18px;
       z-index: 1000;
       background: rgba(248,244,238,0.95);
