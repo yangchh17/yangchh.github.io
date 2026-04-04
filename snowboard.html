@@ -381,32 +381,31 @@ nav {
       z-index: 1000;
       background: rgba(248,244,238,0.96);
       border-bottom: 1.5px solid var(--border);
-      padding: 10px 18px;
-      align-items: center;
-      gap: 0;
+      flex-direction: column;
     }
     .map-info-bar.visible { display: flex; }
+    .map-info-top {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding: 8px 18px 6px;
+    }
     .map-info-resort {
       font-family: var(--syne);
       font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      margin-right: 16px;
-      flex-shrink: 0;
     }
     .map-info-date {
       font-family: var(--mono);
       font-size: 9px;
       color: var(--text-3);
       letter-spacing: 0.08em;
-      margin-right: 20px;
-      flex-shrink: 0;
     }
     .map-info-metrics {
       display: flex;
       gap: 1px;
-      flex: 1;
     }
     .map-info-metric {
       display: flex;
@@ -414,8 +413,9 @@ nav {
       align-items: center;
       background: var(--bg-muted);
       border: 1px solid var(--border);
+      border-top: none;
       padding: 5px 12px;
-      min-width: 64px;
+      flex: 1;
     }
     .map-info-val {
       font-family: var(--syne);
@@ -431,6 +431,31 @@ nav {
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-top: 2px;
+    }
+
+    /* Controls bar — filter + sort above activity list */
+    .controls-bar {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: var(--bg);
+    }
+    .resort-chips { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+    .resort-chip {
+      font-family: var(--mono); font-size: 8px; letter-spacing: .08em;
+      text-transform: uppercase; padding: 3px 8px;
+      border: 1px solid var(--border); cursor: pointer;
+      color: var(--text-3); background: transparent; transition: all .12s;
+    }
+    .resort-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .resort-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .sort-select {
+      font-family: var(--mono); font-size: 8px; letter-spacing: .08em;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-3); padding: 3px 6px; cursor: pointer; outline: none;
     }
 
     /* Legend */
@@ -528,10 +553,10 @@ footer {
           <a href="index.html#stack" class="mega-head">Stack</a>
           <a href="index.html#about" class="mega-head">About</a>
           <button class="mega-link" onclick="downloadCV(event)">Download CV &#8595;</button>
-        </div>
-        <div class="mega-col">
           <a href="index.html#offpiste" class="mega-head">Off-piste</a>
           <a href="snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
+        </div>
+        <div class="mega-col">
           <a href="#contact" class="mega-head">Contact</a>
           <a href="mailto:yangchh@pm.me" class="mega-link">yangchh@pm.me</a>
           <a href="https://github.com/yangchh17" class="mega-link" target="_blank">GitHub</a>
@@ -578,6 +603,16 @@ footer {
         </div>
       </div>
 
+      <div class="controls-bar" id="controlsBar">
+        <div class="resort-chips" id="resortChips"></div>
+        <select class="sort-select" id="sortSelect">
+          <option value="date">Date ↓</option>
+          <option value="speed">Max Speed ↓</option>
+          <option value="vert">Vert ↓</option>
+          <option value="duration">Duration ↓</option>
+        </select>
+      </div>
+
       <div class="activity-list" id="activityList">
         <div style="padding:20px 24px; font-family:var(--mono); font-size:10px; color:var(--text-3);">
           Loading activities...
@@ -597,8 +632,10 @@ footer {
 
       <!-- Info bar: shown when a run is selected -->
       <div class="map-info-bar" id="mapInfoBar">
-        <div class="map-info-resort" id="infoResort"></div>
-        <div class="map-info-date" id="infoDate"></div>
+        <div class="map-info-top">
+          <div class="map-info-resort" id="infoResort"></div>
+          <div class="map-info-date" id="infoDate"></div>
+        </div>
         <div class="map-info-metrics">
           <div class="map-info-metric"><div class="map-info-val" id="infoDist"></div><div class="map-info-lbl">km</div></div>
           <div class="map-info-metric"><div class="map-info-val" id="infoVert"></div><div class="map-info-lbl">vert m</div></div>
@@ -627,6 +664,12 @@ footer {
   <!-- SCRIPTS -->
   <script>
   let map, activePolylines = [], allFeatures = [], selectedId = null;
+  let activeResort = null, sortBy = 'date';
+
+  function extractResort(name) {
+    const m = name.match(/\bat\s+(.+)$/i);
+    return m ? m[1] : name;
+  }
 
   // Initialize map
   map = L.map('map', { zoomControl: false, attributionControl: false })
@@ -650,7 +693,8 @@ footer {
       allFeatures = geojson.features;
 
       renderSummary(allFeatures);
-      renderActivityList(allFeatures);
+      renderControls(allFeatures);
+      applyFilterSort();
 
       setStatus('ok', `${allFeatures.length} sessions loaded`);
     } catch(e) {
@@ -677,23 +721,65 @@ footer {
     }
   }
 
+  // ─── CONTROLS: RESORT FILTER + SORT ──────────────────────────────────
+  function renderControls(features) {
+    const resorts = [...new Set(features.map(f => extractResort(f.properties.resort)))].sort();
+    const chips = document.getElementById('resortChips');
+    chips.innerHTML = '';
+    resorts.forEach(resort => {
+      const chip = document.createElement('button');
+      chip.className   = 'resort-chip';
+      chip.textContent = resort;
+      chip.addEventListener('click', () => {
+        activeResort = (activeResort === resort) ? null : resort;
+        chips.querySelectorAll('.resort-chip').forEach(c =>
+          c.classList.toggle('active', c.textContent === activeResort)
+        );
+        applyFilterSort();
+      });
+      chips.appendChild(chip);
+    });
+
+    document.getElementById('sortSelect').addEventListener('change', e => {
+      sortBy = e.target.value;
+      applyFilterSort();
+    });
+  }
+
+  function applyFilterSort() {
+    let features = allFeatures.slice();
+    if (activeResort) {
+      features = features.filter(f => extractResort(f.properties.resort) === activeResort);
+    }
+    features.sort((a, b) => {
+      const pa = a.properties, pb = b.properties;
+      if (sortBy === 'speed')    return pb.max_speed_kmh - pa.max_speed_kmh;
+      if (sortBy === 'vert')     return pb.vert_m - pa.vert_m;
+      if (sortBy === 'duration') return pb.duration_min - pa.duration_min;
+      return pa.date < pb.date ? 1 : -1; // date desc (default)
+    });
+    renderActivityList(features);
+  }
+
   // ─── RENDER ACTIVITY LIST ─────────────────────────────────────────────
   function renderActivityList(features) {
     const list = document.getElementById('activityList');
     list.innerHTML = '';
 
     features.forEach(f => {
-      const p    = f.properties;
-      const date = new Date(p.date + 'T12:00:00').toLocaleDateString('en-CA', {month:'short', day:'numeric', year:'numeric'});
-      const dur  = formatDuration(p.duration_min * 60);
+      const p      = f.properties;
+      const resort = extractResort(p.resort);
+      const date   = new Date(p.date + 'T12:00:00').toLocaleDateString('en-CA', {month:'short', day:'numeric', year:'numeric'});
+      const dur    = formatDuration(p.duration_min * 60);
 
       const item = document.createElement('div');
-      item.className   = 'activity-item';
-      item.dataset.id  = p.id;
-      item.innerHTML   = `
+      item.className  = 'activity-item';
+      item.dataset.id = p.id;
+      if (p.id === selectedId) item.classList.add('active');
+      item.innerHTML  = `
         <div class="activity-dot"></div>
         <div class="activity-info">
-          <div class="activity-name">${p.resort}</div>
+          <div class="activity-name">${resort}</div>
           <div class="activity-meta">${date} · ${p.distance_km.toFixed(1)}km · ${Math.round(p.vert_m)}m vert · ${dur}</div>
         </div>
         <div class="activity-speed">${Math.round(p.max_speed_kmh)}<span style="font-size:9px;font-weight:300"> km/h</span></div>
@@ -713,7 +799,7 @@ footer {
 
     // Update map info bar
     const date = new Date(p.date + 'T12:00:00').toLocaleDateString('en-CA', {month:'short', day:'numeric', year:'numeric'});
-    document.getElementById('infoResort').textContent = p.resort;
+    document.getElementById('infoResort').textContent = extractResort(p.resort);
     document.getElementById('infoDate').textContent   = date;
     document.getElementById('infoDist').textContent   = p.distance_km.toFixed(1);
     document.getElementById('infoVert').textContent   = Math.round(p.vert_m).toLocaleString();
