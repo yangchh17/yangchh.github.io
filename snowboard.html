@@ -383,7 +383,7 @@ nav {
       border-bottom: 1.5px solid var(--border);
       align-items: baseline;
       gap: 12px;
-      padding: 10px 18px;
+      padding: 17px 18px;
     }
     .map-info-bar.visible { display: flex; }
     .map-info-resort {
@@ -449,6 +449,9 @@ nav {
       color: var(--text-3); padding: 3px 6px; cursor: pointer; outline: none;
       align-self: center;
     }
+
+    /* Push zoom controls below the title bar */
+    #map .leaflet-top.leaflet-right { top: 56px; }
 
     /* Legend — floating bottom-right of map */
     .legend {
