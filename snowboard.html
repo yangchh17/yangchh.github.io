@@ -726,7 +726,7 @@ footer {
         </div>
         <div class="map-timeline" id="mapTimeline">
           <button class="tl-play" id="btnPlay" onclick="togglePlay()">▶</button>
-          <span class="tl-time">0:00</span>
+          <span class="tl-time" id="timelineStart">0:00</span>
           <div class="tl-canvas-wrap">
             <canvas id="timelineCanvas"></canvas>
             <div class="tl-cursor" id="tlCursor"></div>
@@ -756,16 +756,21 @@ footer {
   const _sbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="#d44820" stroke="white" stroke-width="2.5"/><circle cx="18" cy="10" r="3.5" fill="white"/><line x1="18" y1="14" x2="15.5" y2="22" stroke="white" stroke-width="2.4" stroke-linecap="round"/><line x1="12" y1="17" x2="24" y2="15" stroke="white" stroke-width="2.1" stroke-linecap="round"/><rect x="10" y="23.5" width="16" height="4" rx="2" fill="white" transform="rotate(-8 18 25.5)"/></svg>`;
   const _sbImg = new Image(36, 36);
   let _sbImgReady = false;
-  _sbImg.onload = () => { _sbImgReady = true; };
+  _sbImg.onload = () => {
+    _sbImgReady = true;
+    if (mapReady && !map.hasImage('snowboard-icon')) {
+      map.addImage('snowboard-icon', _sbImg, { pixelRatio: 2 });
+    }
+  };
   _sbImg.src = 'data:image/svg+xml,' + encodeURIComponent(_sbSvg);
 
   // ─── MAP INIT ────────────────────────────────────────────────────────
   mapboxgl.accessToken = 'pk.eyJ1IjoiY2hoeWFuZzE3IiwiYSI6ImNtbmpsemYzdTBmOXIyb29uMmJqOHI2MXQifQ.Mm7R99dWitnrJcQPtK882w';
 
   const STYLES = {
-    dark:   'mapbox://styles/chhyang17/cmnli3hie001c01sugapr6011',
-    light:  'mapbox://styles/chhyang17/cmnlhsk7y001b01su551bcsp1',
-    sat:    'mapbox://styles/mapbox/satellite-streets-v12',
+  dark:  'mapbox://styles/mapbox/dark-v11',
+  light: 'mapbox://styles/mapbox/light-v11',
+  sat:   'mapbox://styles/mapbox/satellite-streets-v12'
   };
   let currentStyle = 'dark';
 
@@ -781,63 +786,83 @@ footer {
   map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
 
   function addMapLayers() {
-    map.addSource('mapbox-dem', {
-      type: 'raster-dem',
-      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-      tileSize: 512, maxzoom: 14
-    });
+    if (!map.getSource('mapbox-dem')) {
+      map.addSource('mapbox-dem', {
+        type: 'raster-dem',
+        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512, maxzoom: 14
+      });
+    }
     map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
 
-    map.addLayer({ id: 'sky', type: 'sky', paint: {
-      'sky-type': 'atmosphere',
-      'sky-atmosphere-sun': [0.0, 0.0],
-      'sky-atmosphere-sun-intensity': 15
-    }});
+    if (!map.getLayer('sky')) {
+      map.addLayer({ id: 'sky', type: 'sky', paint: {
+        'sky-type': 'atmosphere',
+        'sky-atmosphere-sun': [0.0, 0.0],
+        'sky-atmosphere-sun-intensity': 15
+      }});
+    }
 
-    map.addSource('run-track', {
-      type: 'geojson',
-      data: { type: 'FeatureCollection', features: [] }
-    });
+    if (!map.getSource('run-track')) {
+      map.addSource('run-track', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+    }
 
-    // White casing layer — drawn first (below), applies to ALL segments
-    map.addLayer({
-      id: 'run-track-casing', type: 'line', source: 'run-track',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-width': ['case', ['==', ['get', 'lift'], 1], 5, 4.5],
-        'line-color': '#ffffff',
-        'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.6, 0.15]
-      }
-    });
+    // White casing layer — lifts only (runs: opacity 0 so speed colors show fully vivid)
+    if (!map.getLayer('run-track-casing')) {
+      map.addLayer({
+        id: 'run-track-casing', type: 'line', source: 'run-track',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-width': ['case', ['==', ['get', 'lift'], 1], 5, 4.5],
+          'line-color': '#ffffff',
+          'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.6, 0]
+        }
+      });
+    }
 
     // Main track layer — speed-colored runs + charcoal fill for lifts
-    map.addLayer({
-      id: 'run-track', type: 'line', source: 'run-track',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-width': ['case', ['==', ['get', 'lift'], 1], 2.5, 3],
-        'line-opacity': 0.95,
-        'line-color': ['case',
-          ['==', ['get', 'lift'], 1], '#333333',
-          ['interpolate', ['linear'], ['get', 'speed'],
-            0, '#4575b4', 15, '#74add1', 25, '#abd9e9',
-            35, '#fee090', 50, '#f46d43', 70, '#d73027'
+    if (!map.getLayer('run-track')) {
+      map.addLayer({
+        id: 'run-track', type: 'line', source: 'run-track',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-width': ['case', ['==', ['get', 'lift'], 1], 2.5, 3],
+          'line-opacity': 1,
+          'line-color': ['case',
+            ['==', ['get', 'lift'], 1], '#222222',
+            ['interpolate', ['linear'], ['get', 'speed'],
+              0,  '#1e3a8a',   // deep blue
+              12, '#3b82f6',   // bright blue
+              25, '#22d3ee',   // cyan
+              38, '#facc15',   // vivid yellow
+              52, '#f97316',   // bright orange
+              70, '#ef4444'    // punchy red
+            ]
           ]
-        ]
-      }
-    });
+        }
+      });
+    }
 
     // Current position icon — added last so it renders on top of the track
-    map.addSource('run-pos', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-    if (_sbImgReady) map.addImage('snowboard-icon', _sbImg, { pixelRatio: 2 });
-    map.addLayer({ id: 'run-pos', type: 'symbol', source: 'run-pos',
-      layout: {
-        'icon-image': 'snowboard-icon',
-        'icon-size': 1,
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true
-      }
-    });
+    if (!map.getSource('run-pos')) {
+      map.addSource('run-pos', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    }
+    if (_sbImgReady && !map.hasImage('snowboard-icon')) {
+      map.addImage('snowboard-icon', _sbImg, { pixelRatio: 2 });
+    }
+    if (!map.getLayer('run-pos')) {
+      map.addLayer({ id: 'run-pos', type: 'symbol', source: 'run-pos',
+        layout: {
+          'icon-image': 'snowboard-icon',
+          'icon-size': 1,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true
+        }
+      });
+    }
   }
 
   map.on('load', () => {
@@ -973,6 +998,8 @@ footer {
     document.getElementById('btnPlay').textContent = '▶';
     const cur = document.getElementById('tlCursor');
     if (cur) cur.style.display = 'none';
+    const elStart = document.getElementById('timelineStart');
+    if (elStart) elStart.textContent = '0:00';
     if (map.getSource('run-pos')) map.getSource('run-pos').setData({ type: 'FeatureCollection', features: [] });
 
     // Draw selected track with speed heatmap + timeline
@@ -1060,27 +1087,66 @@ footer {
     const times  = f.properties.times  || [];
     const total  = times[times.length - 1] || 1;
     const WIN = 5;
+
+    // Build partial track up to current time
     const segments = [];
     for (let i = 1; i < times.length; i++) {
       if (times[i] > t) break;
-      const lo = Math.max(0, i - WIN), hi = Math.min(raw.length - 1, i + WIN);
+      const lo = Math.max(0, i - WIN);
+      const hi = Math.min(raw.length - 1, i + WIN);
       const isLift = (raw[hi][2] || 0) - (raw[lo][2] || 0) > 14;
-      segments.push({ type: 'Feature',
+      segments.push({
+        type: 'Feature',
         properties: { speed: speeds[i] || 0, lift: isLift ? 1 : 0 },
         geometry: { type: 'LineString', coordinates: [coords[i-1], coords[i]] }
       });
     }
-    if (map.getSource('run-track')) map.getSource('run-track').setData({ type: 'FeatureCollection', features: segments });
-    // Move position dot
-    const idx = Math.max(0, times.findIndex(ts => ts > t) - 1);
-    if (raw[idx] && map.getSource('run-pos')) {
-      map.getSource('run-pos').setData({ type: 'FeatureCollection', features: [{
-        type: 'Feature', geometry: { type: 'Point', coordinates: [raw[idx][0], raw[idx][1]] }
-      }]});
+    if (map.getSource('run-track')) {
+      map.getSource('run-track').setData({ type: 'FeatureCollection', features: segments });
     }
-    // Move timeline cursor
+
+    // FIXED: Find current position with safety + smooth interpolation
+    let idx = 0;
+    if (times.length > 1) {
+      idx = times.findIndex(ts => ts > t) - 1;
+      if (idx < 0) idx = 0;
+      if (idx >= raw.length) idx = raw.length - 1;
+    }
+
+    if (idx < raw.length - 1 && times[idx + 1] > times[idx]) {
+      // Interpolate for smooth movement
+      const progress = (t - times[idx]) / (times[idx + 1] - times[idx]);
+      const lng = raw[idx][0] + (raw[idx + 1][0] - raw[idx][0]) * progress;
+      const lat = raw[idx][1] + (raw[idx + 1][1] - raw[idx][1]) * progress;
+
+      if (map.getSource('run-pos')) {
+        map.getSource('run-pos').setData({
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [lng, lat] }
+          }]
+        });
+      }
+    } else if (raw[idx] && map.getSource('run-pos')) {
+      // Fallback to exact point
+      map.getSource('run-pos').setData({
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [raw[idx][0], raw[idx][1]] }
+        }]
+      });
+    }
+
+    // Update timeline cursor and elapsed time
     const cur = document.getElementById('tlCursor');
-    if (cur) { cur.style.left = ((t / total) * 100) + '%'; cur.style.display = 'block'; }
+    if (cur) {
+      cur.style.left = ((t / total) * 100) + '%';
+      cur.style.display = 'block';
+    }
+    const el = document.getElementById('timelineStart');
+    if (el) el.textContent = formatElapsed(t);
   }
 
   // ─── SPEED → COLOR (matches MapboxGL interpolation) ──────────────────
@@ -1150,6 +1216,15 @@ footer {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
+
+  function formatElapsed(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const ss = Math.floor(s % 60);
+    return h > 0
+      ? `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
+      : `${m}:${String(ss).padStart(2,'0')}`;
   }
 
   function setStatus(type, text) {
