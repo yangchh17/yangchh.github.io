@@ -684,6 +684,10 @@ footer {
           <span class="legend-label">0 km/h</span>
           <span class="legend-label" id="legendMax">— km/h</span>
         </div>
+        <div class="legend-row" style="margin-top:8px; gap:8px;">
+          <div style="width:80px; height:3px; background:#333333; box-shadow:0 0 0 1.5px rgba(255,255,255,0.65);"></div>
+          <span class="legend-label">Lift</span>
+        </div>
       </div>
 
     </div>
@@ -737,14 +741,23 @@ footer {
       data: { type: 'FeatureCollection', features: [] }
     });
 
+    // White casing layer — drawn first (below), lift segments only
+    map.addLayer({
+      id: 'run-lift-casing', type: 'line', source: 'run-track',
+      filter: ['==', ['get', 'lift'], 1],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-width': 5, 'line-color': '#ffffff', 'line-opacity': 0.65 }
+    });
+
+    // Main track layer — speed-colored runs + charcoal fill for lifts
     map.addLayer({
       id: 'run-track', type: 'line', source: 'run-track',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
       paint: {
-        'line-width': ['case', ['==', ['get', 'lift'], 1], 2, 3],
-        'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.6, 0.92],
+        'line-width': ['case', ['==', ['get', 'lift'], 1], 2.5, 3],
+        'line-opacity': 0.95,
         'line-color': ['case',
-          ['==', ['get', 'lift'], 1], '#222222',
+          ['==', ['get', 'lift'], 1], '#333333',
           ['interpolate', ['linear'], ['get', 'speed'],
             0, '#4575b4', 15, '#74add1', 25, '#abd9e9',
             35, '#fee090', 50, '#f46d43', 70, '#d73027'
@@ -897,14 +910,13 @@ footer {
     if (!mapReady) { pendingDraw = f; return; }
     const coords = f.geometry.coordinates;
     const speeds = f.properties.speeds || [];
-    const WIN = 5; // rolling window for altitude trend
+    const WIN = 6; // forward-looking window — avoids false positives at lift exit
     const segments = [];
     for (let i = 1; i < coords.length; i++) {
-      // net altitude change over surrounding window
-      const lo = Math.max(0, i - WIN);
+      // look FORWARD only: once descending, immediately no longer a lift
       const hi = Math.min(coords.length - 1, i + WIN);
-      const altDelta = (coords[hi][2] || 0) - (coords[lo][2] || 0);
-      const isLift = altDelta > 8; // >8m gain over window = lift
+      const altDelta = (coords[hi][2] || 0) - (coords[i][2] || 0);
+      const isLift = altDelta > 5 && (speeds[i] || 0) < 20; // uphill + slow speed
       segments.push({
         type: 'Feature',
         properties: { speed: speeds[i] || 0, lift: isLift ? 1 : 0 },
