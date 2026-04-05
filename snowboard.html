@@ -752,8 +752,15 @@ footer {
   let allFeatures = [], selectedId = null, sortBy = 'date';
   let mapReady = false, pendingDraw = null;
 
+  // ─── SNOWBOARD ICON (preloaded data-URI SVG) ─────────────────────────
+  const _sbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="#d44820" stroke="white" stroke-width="2.5"/><circle cx="18" cy="10" r="3.5" fill="white"/><line x1="18" y1="14" x2="15.5" y2="22" stroke="white" stroke-width="2.4" stroke-linecap="round"/><line x1="12" y1="17" x2="24" y2="15" stroke="white" stroke-width="2.1" stroke-linecap="round"/><rect x="10" y="23.5" width="16" height="4" rx="2" fill="white" transform="rotate(-8 18 25.5)"/></svg>`;
+  const _sbImg = new Image(36, 36);
+  let _sbImgReady = false;
+  _sbImg.onload = () => { _sbImgReady = true; };
+  _sbImg.src = 'data:image/svg+xml,' + encodeURIComponent(_sbSvg);
+
   // ─── MAP INIT ────────────────────────────────────────────────────────
-  mapboxgl.accessToken = 'pk.eyJ1IjoiY2hoeWFuZzE3IiwiYSI6ImNtbmptOTM1YzBxOXcycW9hcmphNmJybW4ifQ.dUtWht-weoeupbNtPtluOw';
+  mapboxgl.accessToken = 'pk.eyJ1IjoiY2hoeWFuZzE3IiwiYSI6ImNtbmpsemYzdTBmOXIyb29uMmJqOHI2MXQifQ.Mm7R99dWitnrJcQPtK882w';
 
   const STYLES = {
     dark:   'mapbox://styles/chhyang17/cmnli3hie001c01sugapr6011',
@@ -799,15 +806,8 @@ footer {
       paint: {
         'line-width': ['case', ['==', ['get', 'lift'], 1], 5, 4.5],
         'line-color': '#ffffff',
-        'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.65, 0.35]
+        'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.6, 0.15]
       }
-    });
-
-    // Current position dot (shown during playback)
-    map.addSource('run-pos', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-    map.addLayer({ id: 'run-pos', type: 'circle', source: 'run-pos',
-      paint: { 'circle-radius': 7, 'circle-color': '#fff',
-               'circle-stroke-width': 2.5, 'circle-stroke-color': '#d44820' }
     });
 
     // Main track layer — speed-colored runs + charcoal fill for lifts
@@ -824,6 +824,18 @@ footer {
             35, '#fee090', 50, '#f46d43', 70, '#d73027'
           ]
         ]
+      }
+    });
+
+    // Current position icon — added last so it renders on top of the track
+    map.addSource('run-pos', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    if (_sbImgReady) map.addImage('snowboard-icon', _sbImg, { pixelRatio: 2 });
+    map.addLayer({ id: 'run-pos', type: 'symbol', source: 'run-pos',
+      layout: {
+        'icon-image': 'snowboard-icon',
+        'icon-size': 1,
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true
       }
     });
   }
