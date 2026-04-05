@@ -443,32 +443,48 @@ nav {
     /* ── Unified bottom bar: style toggle + timeline + legend ── */
     .map-bottom-bar {
       position: absolute;
-      bottom: 22px; left: 0; right: 0;
+      bottom: 0; left: 0; right: 0;
       z-index: 1000;
       display: flex;
       align-items: stretch;
       height: 34px;
-      background: rgba(20,14,8,0.85);
-      border-top: 1px solid rgba(255,255,255,0.1);
+      background: #140e08;
+      border-top: 1px solid rgba(255,255,255,0.12);
     }
-    .map-style-toggle {
-      display: flex;
+    /* Layer dropup */
+    .map-layer-toggle {
+      position: relative;
       flex-shrink: 0;
       border-right: 1px solid rgba(255,255,255,0.1);
     }
-    .style-btn {
-      font-family: var(--mono);
-      font-size: 8px;
-      letter-spacing: 0.1em;
-      padding: 0 11px;
-      background: transparent;
-      color: rgba(255,255,255,0.5);
-      border: none;
-      border-right: 1px solid rgba(255,255,255,0.08);
-      cursor: pointer;
+    .layer-icon-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 13px; height: 34px;
+      background: transparent; border: none;
+      color: rgba(255,255,255,0.55);
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em;
+      cursor: pointer; white-space: nowrap;
     }
-    .style-btn:last-child { border-right: none; }
-    .style-btn.active { background: var(--accent); color: #fff; }
+    .layer-icon-btn:hover { color: #fff; }
+    .layer-dropup {
+      display: none; flex-direction: column;
+      position: absolute; bottom: 100%; left: 0;
+      background: #140e08;
+      border: 1px solid rgba(255,255,255,0.15);
+      min-width: 100%;
+      margin-bottom: 4px;
+    }
+    .layer-dropup.open { display: flex; }
+    .style-btn {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em;
+      padding: 8px 13px; text-align: left;
+      background: transparent; color: rgba(255,255,255,0.5);
+      border: none; border-bottom: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer; white-space: nowrap;
+    }
+    .style-btn:last-child { border-bottom: none; }
+    .style-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .style-btn.active { color: #fff; background: var(--accent); }
     /* Timeline */
     .map-timeline {
       flex: 1; min-width: 0;
@@ -482,8 +498,19 @@ nav {
       color: rgba(255,255,255,0.35); letter-spacing: 0.06em;
       flex-shrink: 0;
     }
-    .tl-canvas-wrap { flex: 1; min-width: 0; height: 10px; }
-    #timelineCanvas { width: 100%; height: 100%; display: block; }
+    .tl-play {
+      font-size: 9px; background: none; border: none;
+      color: rgba(255,255,255,0.5); cursor: pointer;
+      padding: 0 6px; flex-shrink: 0; line-height: 1;
+    }
+    .tl-play:hover { color: #fff; }
+    .tl-canvas-wrap { flex: 1; min-width: 0; height: 10px; position: relative; }
+    #timelineCanvas { width: 100%; height: 100%; display: block; cursor: pointer; }
+    .tl-cursor {
+      position: absolute; top: -2px; bottom: -2px; width: 2px;
+      background: #fff; pointer-events: none; display: none;
+      box-shadow: 0 0 4px rgba(0,0,0,0.6);
+    }
     /* Inline legend */
     .map-legend-inline {
       display: flex; align-items: center; gap: 7px;
@@ -682,14 +709,28 @@ footer {
 
       <!-- Unified bottom bar -->
       <div class="map-bottom-bar">
-        <div class="map-style-toggle">
-          <button class="style-btn active" id="btnDark"  onclick="setMapStyle('dark')">DARK</button>
-          <button class="style-btn"        id="btnLight" onclick="setMapStyle('light')">LIGHT</button>
-          <button class="style-btn"        id="btnSat"   onclick="setMapStyle('sat')">SAT</button>
+        <div class="map-layer-toggle" id="layerToggle">
+          <button class="layer-icon-btn" onclick="toggleLayerMenu()">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
+              <path d="M6.5 1L1 4l5.5 3L12 4z" opacity="0.9"/>
+              <path d="M1 6.5l5.5 3 5.5-3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M1 9l5.5 3 5.5-3" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.5"/>
+            </svg>
+            <span id="layerLabel">DARK</span>
+          </button>
+          <div class="layer-dropup" id="layerMenu">
+            <button class="style-btn active" id="btnDark"  onclick="setMapStyle('dark')">DARK</button>
+            <button class="style-btn"        id="btnLight" onclick="setMapStyle('light')">LIGHT</button>
+            <button class="style-btn"        id="btnSat"   onclick="setMapStyle('sat')">SAT</button>
+          </div>
         </div>
         <div class="map-timeline" id="mapTimeline">
+          <button class="tl-play" id="btnPlay" onclick="togglePlay()">▶</button>
           <span class="tl-time">0:00</span>
-          <div class="tl-canvas-wrap"><canvas id="timelineCanvas"></canvas></div>
+          <div class="tl-canvas-wrap">
+            <canvas id="timelineCanvas"></canvas>
+            <div class="tl-cursor" id="tlCursor"></div>
+          </div>
           <span class="tl-time" id="timelineEnd">—</span>
         </div>
         <div class="map-legend-inline">
@@ -715,9 +756,9 @@ footer {
   mapboxgl.accessToken = 'pk.eyJ1IjoiY2hoeWFuZzE3IiwiYSI6ImNtbmptOTM1YzBxOXcycW9hcmphNmJybW4ifQ.dUtWht-weoeupbNtPtluOw';
 
   const STYLES = {
-    dark:  'mapbox://styles/mapbox/dark-v11',
-    light: 'mapbox://styles/mapbox/light-v11',
-    sat:   'mapbox://styles/mapbox/satellite-streets-v12'
+    dark:   'mapbox://styles/chhyang17/cmnli3hie001c01sugapr6011',
+    light:  'mapbox://styles/chhyang17/cmnlhsk7y001b01su551bcsp1',
+    sat:    'mapbox://styles/mapbox/satellite-streets-v12',
   };
   let currentStyle = 'dark';
 
@@ -725,12 +766,11 @@ footer {
     container: 'map',
     style: STYLES.dark,
     center: [-122.9, 50.1],
-    zoom: 9,
-    pitch: 55,
-    bearing: -15,
-    antialias: true
+    zoom: 9, pitch: 55, bearing: -15, antialias: true,
+    attributionControl: false   // we use compact attribution in the bar
   });
 
+  map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
   map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
 
   function addMapLayers() {
@@ -761,6 +801,13 @@ footer {
         'line-color': '#ffffff',
         'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.65, 0.35]
       }
+    });
+
+    // Current position dot (shown during playback)
+    map.addSource('run-pos', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: 'run-pos', type: 'circle', source: 'run-pos',
+      paint: { 'circle-radius': 7, 'circle-color': '#fff',
+               'circle-stroke-width': 2.5, 'circle-stroke-color': '#d44820' }
     });
 
     // Main track layer — speed-colored runs + charcoal fill for lifts
@@ -799,9 +846,12 @@ footer {
       mapReady = true;
       if (redraw) drawTrack(redraw);
     });
-    document.getElementById('btnDark').classList.toggle('active', style === 'dark');
-    document.getElementById('btnLight').classList.toggle('active', style === 'light');
-    document.getElementById('btnSat').classList.toggle('active', style === 'sat');
+    ['dark','light','sat'].forEach(s =>
+      document.getElementById('btn' + s.charAt(0).toUpperCase() + s.slice(1))
+        .classList.toggle('active', s === style)
+    );
+    document.getElementById('layerLabel').textContent = style.toUpperCase();
+    document.getElementById('layerMenu').classList.remove('open');
   }
 
   // ─── INIT ─────────────────────────────────────────────────────────────
@@ -905,6 +955,14 @@ footer {
     // Update legend max speed
     document.getElementById('legendMax').textContent = Math.round(p.max_speed_kmh) + ' km/h';
 
+    // Reset playback state for new selection
+    if (playTimer) { clearInterval(playTimer); playTimer = null; }
+    playTime = 0; playFeature = f;
+    document.getElementById('btnPlay').textContent = '▶';
+    const cur = document.getElementById('tlCursor');
+    if (cur) cur.style.display = 'none';
+    if (map.getSource('run-pos')) map.getSource('run-pos').setData({ type: 'FeatureCollection', features: [] });
+
     // Draw selected track with speed heatmap + timeline
     drawTrack(f);
     drawTimeline(f);
@@ -954,6 +1012,63 @@ footer {
       });
     }
     map.getSource('run-track').setData({ type: 'FeatureCollection', features: segments });
+  }
+
+  // ─── PLAYBACK STATE ──────────────────────────────────────────────────
+  let playTimer = null, playTime = 0, playFeature = null;
+  const PLAY_SPEED = 60; // 60× real time
+
+  function togglePlay() {
+    if (!playFeature) return;
+    if (playTimer) {
+      clearInterval(playTimer); playTimer = null;
+      document.getElementById('btnPlay').textContent = '▶';
+      return;
+    }
+    const times = playFeature.properties.times || [];
+    const total = times[times.length - 1] || 1;
+    if (playTime >= total) playTime = 0;
+    const startWall = Date.now() - (playTime * 1000 / PLAY_SPEED);
+    document.getElementById('btnPlay').textContent = '⏸';
+    playTimer = setInterval(() => {
+      playTime = Math.min(total, (Date.now() - startWall) * PLAY_SPEED / 1000);
+      updatePlayhead(playFeature, playTime);
+      if (playTime >= total) {
+        clearInterval(playTimer); playTimer = null;
+        document.getElementById('btnPlay').textContent = '▶';
+        drawTrack(playFeature); // restore full track at end
+      }
+    }, 50);
+  }
+
+  function updatePlayhead(f, t) {
+    const raw    = f.geometry.coordinates;
+    const coords = smoothCoords(raw);
+    const speeds = f.properties.speeds || [];
+    const times  = f.properties.times  || [];
+    const total  = times[times.length - 1] || 1;
+    const WIN = 5;
+    const segments = [];
+    for (let i = 1; i < times.length; i++) {
+      if (times[i] > t) break;
+      const lo = Math.max(0, i - WIN), hi = Math.min(raw.length - 1, i + WIN);
+      const isLift = (raw[hi][2] || 0) - (raw[lo][2] || 0) > 14;
+      segments.push({ type: 'Feature',
+        properties: { speed: speeds[i] || 0, lift: isLift ? 1 : 0 },
+        geometry: { type: 'LineString', coordinates: [coords[i-1], coords[i]] }
+      });
+    }
+    if (map.getSource('run-track')) map.getSource('run-track').setData({ type: 'FeatureCollection', features: segments });
+    // Move position dot
+    const idx = Math.max(0, times.findIndex(ts => ts > t) - 1);
+    if (raw[idx] && map.getSource('run-pos')) {
+      map.getSource('run-pos').setData({ type: 'FeatureCollection', features: [{
+        type: 'Feature', geometry: { type: 'Point', coordinates: [raw[idx][0], raw[idx][1]] }
+      }]});
+    }
+    // Move timeline cursor
+    const cur = document.getElementById('tlCursor');
+    if (cur) { cur.style.left = ((t / total) * 100) + '%'; cur.style.display = 'block'; }
   }
 
   // ─── SPEED → COLOR (matches MapboxGL interpolation) ──────────────────
@@ -1007,6 +1122,16 @@ footer {
 
     document.getElementById('timelineEnd').textContent = formatDuration(total);
     tl.classList.add('visible');
+
+    // Click-to-seek
+    canvas.onclick = (e) => {
+      if (!playFeature) return;
+      const rect = canvas.getBoundingClientRect();
+      const t2 = ((e.clientX - rect.left) / rect.width) * total;
+      playTime = t2;
+      if (playTimer) { clearInterval(playTimer); playTimer = null; document.getElementById('btnPlay').textContent = '▶'; }
+      updatePlayhead(playFeature, playTime);
+    };
   }
 
   function formatDuration(seconds) {
@@ -1021,6 +1146,15 @@ footer {
     dot.className = 'status-dot' + (type !== 'ok' ? ' ' + type : '');
     txt.textContent = text;
   }
+
+  // ─── LAYER DROPUP ────────────────────────────────────────────────────
+  function toggleLayerMenu() {
+    document.getElementById('layerMenu').classList.toggle('open');
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#layerToggle'))
+      document.getElementById('layerMenu').classList.remove('open');
+  });
 
   // ─── KICK OFF ────────────────────────────────────────────────────────
   init();
