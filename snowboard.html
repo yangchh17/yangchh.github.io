@@ -413,7 +413,7 @@ nav {
     .map-metrics-card {
       display: none;
       position: absolute;
-      top: 40px;
+      top: 54px;
       left: 14px;
       z-index: 1000;
       background: rgba(20,14,8,0.82);
@@ -485,7 +485,7 @@ nav {
     /* Legend — floating bottom-right of map */
     .legend {
       position: absolute;
-      bottom: 16px;
+      bottom: 36px;
       right: 18px;
       z-index: 1000;
       background: rgba(248,244,238,0.95);
@@ -910,13 +910,14 @@ footer {
     if (!mapReady) { pendingDraw = f; return; }
     const coords = f.geometry.coordinates;
     const speeds = f.properties.speeds || [];
-    const WIN = 6; // forward-looking window — avoids false positives at lift exit
+    const WIN = 5; // centered window ±5 points for smooth altitude trend
     const segments = [];
     for (let i = 1; i < coords.length; i++) {
-      // look FORWARD only: once descending, immediately no longer a lift
+      // net altitude change across window — sustained gain = lift, descent = run
+      const lo = Math.max(0, i - WIN);
       const hi = Math.min(coords.length - 1, i + WIN);
-      const altDelta = (coords[hi][2] || 0) - (coords[i][2] || 0);
-      const isLift = altDelta > 5 && (speeds[i] || 0) < 20; // uphill + slow speed
+      const altDelta = (coords[hi][2] || 0) - (coords[lo][2] || 0);
+      const isLift = altDelta > 10; // >10m net gain over window = lift
       segments.push({
         type: 'Feature',
         properties: { speed: speeds[i] || 0, lift: isLift ? 1 : 0 },
