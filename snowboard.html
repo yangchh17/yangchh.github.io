@@ -741,12 +741,15 @@ footer {
       data: { type: 'FeatureCollection', features: [] }
     });
 
-    // White casing layer — drawn first (below), lift segments only
+    // White casing layer — drawn first (below), applies to ALL segments
     map.addLayer({
-      id: 'run-lift-casing', type: 'line', source: 'run-track',
-      filter: ['==', ['get', 'lift'], 1],
+      id: 'run-track-casing', type: 'line', source: 'run-track',
       layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-width': 5, 'line-color': '#ffffff', 'line-opacity': 0.65 }
+      paint: {
+        'line-width': ['case', ['==', ['get', 'lift'], 1], 5, 4.5],
+        'line-color': '#ffffff',
+        'line-opacity': ['case', ['==', ['get', 'lift'], 1], 0.65, 0.35]
+      }
     });
 
     // Main track layer — speed-colored runs + charcoal fill for lifts
@@ -906,9 +909,23 @@ footer {
   }
 
   // ─── DRAW TRACK ───────────────────────────────────────────────────────
+  function smoothCoords(coords, w = 4) {
+    // Moving average on lng/lat only — keeps original altitude for lift detection
+    return coords.map((c, i) => {
+      const lo = Math.max(0, i - w), hi = Math.min(coords.length - 1, i + w);
+      const slice = coords.slice(lo, hi + 1);
+      return [
+        slice.reduce((s, p) => s + p[0], 0) / slice.length,
+        slice.reduce((s, p) => s + p[1], 0) / slice.length,
+        c[2] // preserve original altitude
+      ];
+    });
+  }
+
   function drawTrack(f) {
     if (!mapReady) { pendingDraw = f; return; }
-    const coords = f.geometry.coordinates;
+    const raw    = f.geometry.coordinates;
+    const coords = smoothCoords(raw);     // smooth lng/lat, keep raw altitude
     const speeds = f.properties.speeds || [];
     const WIN = 5; // centered window ±5 points for smooth altitude trend
     const segments = [];
@@ -916,8 +933,8 @@ footer {
       // net altitude change across window — sustained gain = lift, descent = run
       const lo = Math.max(0, i - WIN);
       const hi = Math.min(coords.length - 1, i + WIN);
-      const altDelta = (coords[hi][2] || 0) - (coords[lo][2] || 0);
-      const isLift = altDelta > 10; // >10m net gain over window = lift
+      const altDelta = (raw[hi][2] || 0) - (raw[lo][2] || 0); // use raw alt for accuracy
+      const isLift = altDelta > 14; // >14m net gain over window = lift
       segments.push({
         type: 'Feature',
         properties: { speed: speeds[i] || 0, lift: isLift ? 1 : 0 },
