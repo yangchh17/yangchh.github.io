@@ -31,7 +31,7 @@ CLIENT_ID     = os.getenv("STRAVA_CLIENT_ID")
 CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
 REFRESH_TOKEN = os.getenv("STRAVA_REFRESH_TOKEN")
 
-OUTPUT_PATH = Path(__file__).parent / "asset" / "snowboard-runs.geojson"
+OUTPUT_PATH = Path(__file__).parent.parent / "asset" / "snowboard-runs.geojson"
 SPORT_TYPE  = "Snowboard"   # change to "AlpineSki" for skiing
 
 
@@ -93,9 +93,10 @@ def build_feature(activity, streams):
     if not latlng:
         return None
 
-    # Pad altitude/velocity arrays if missing data
+    # Pad altitude/velocity/time arrays if missing data
     altitude = altitude or [0] * len(latlng)
     velocity = velocity or [0] * len(latlng)
+    times    = times    or list(range(len(latlng)))  # fallback: 1 sec per point
 
     # Coordinates: [lng, lat, elevation]
     coordinates = [
@@ -147,6 +148,7 @@ def build_feature(activity, streams):
             "avg_speed_kmh": avg_speed_kmh,
             "duration_min":  duration_min,
             "speeds":        speeds,
+            "times":         times,   # seconds elapsed since activity start, per point
         },
     }
 

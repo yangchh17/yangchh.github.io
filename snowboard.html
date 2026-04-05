@@ -440,29 +440,73 @@ nav {
     /* duration spans full width on its own row */
     .map-info-metric.full { grid-column: 1 / -1; }
 
-    /* Basemap style toggle — bottom-left of map, above Mapbox logo */
-    .map-style-toggle {
+    /* ── Unified bottom bar: style toggle + timeline + legend ── */
+    .map-bottom-bar {
       position: absolute;
-      bottom: 36px;
-      left: 16px;
+      bottom: 22px; left: 0; right: 0;
       z-index: 1000;
       display: flex;
-      border: 1px solid rgba(255,255,255,0.18);
-      overflow: hidden;
+      align-items: stretch;
+      height: 34px;
+      background: rgba(20,14,8,0.85);
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .map-style-toggle {
+      display: flex;
+      flex-shrink: 0;
+      border-right: 1px solid rgba(255,255,255,0.1);
     }
     .style-btn {
       font-family: var(--mono);
       font-size: 8px;
       letter-spacing: 0.1em;
-      padding: 5px 10px;
-      background: rgba(20,14,8,0.72);
-      color: rgba(255,255,255,0.55);
+      padding: 0 11px;
+      background: transparent;
+      color: rgba(255,255,255,0.5);
       border: none;
-      border-right: 1px solid rgba(255,255,255,0.12);
+      border-right: 1px solid rgba(255,255,255,0.08);
       cursor: pointer;
     }
     .style-btn:last-child { border-right: none; }
     .style-btn.active { background: var(--accent); color: #fff; }
+    /* Timeline */
+    .map-timeline {
+      flex: 1; min-width: 0;
+      display: flex; align-items: center;
+      padding: 0 12px; gap: 8px;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .map-timeline.visible { opacity: 1; }
+    .tl-time {
+      font-family: var(--mono); font-size: 8px;
+      color: rgba(255,255,255,0.35); letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+    .tl-canvas-wrap { flex: 1; min-width: 0; height: 10px; }
+    #timelineCanvas { width: 100%; height: 100%; display: block; }
+    /* Inline legend */
+    .map-legend-inline {
+      display: flex; align-items: center; gap: 7px;
+      padding: 0 12px;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .lgi-swatch {
+      width: 64px; height: 5px;
+      background: linear-gradient(to right,#4575b4,#74add1,#abd9e9,#fee090,#f46d43,#d73027);
+      flex-shrink: 0;
+    }
+    .lgi-label {
+      font-family: var(--mono); font-size: 8px;
+      color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .lgi-lift {
+      width: 22px; height: 3px;
+      background: #444;
+      box-shadow: 0 0 0 1.5px rgba(255,255,255,0.55);
+      flex-shrink: 0;
+    }
 
     /* Sort select in panel header */
     .panel-title-row {
@@ -482,39 +526,6 @@ nav {
     #map .mapboxgl-ctrl-top-right { top: 60px; }
     #map .mapboxgl-ctrl-top-right .mapboxgl-ctrl { margin: 0 10px 10px 0; }
 
-    /* Legend — floating bottom-right of map */
-    .legend {
-      position: absolute;
-      bottom: 36px;
-      right: 18px;
-      z-index: 1000;
-      background: rgba(248,244,238,0.95);
-      border: 1.5px solid var(--border);
-      padding: 10px 14px;
-    }
-    .legend-title {
-      font-family: var(--mono);
-      font-size: 8px;
-      color: var(--text-3);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
-    .legend-swatch {
-      width: 80px; height: 6px;
-    }
-    .legend-labels {
-      display: flex;
-      justify-content: space-between;
-      width: 80px;
-    }
-    .legend-label {
-      font-family: var(--mono);
-      font-size: 8px;
-      color: var(--text-3);
-      letter-spacing: 0.06em;
-    }
 
     @media (max-width: 768px) {
       nav { padding: 0 16px; }
@@ -526,10 +537,10 @@ nav {
       }
       .strava-panel { border-right: none; border-bottom: 1.5px solid var(--border); }
       .strava-map-col { height: 360px; }
-      .legend { bottom: 36px; right: 10px; padding: 7px 10px; }
-      .legend-swatch { width: 60px; }
-      .legend-labels { width: 60px; }
-      .map-style-toggle { bottom: 36px; left: 10px; }
+      .map-bottom-bar { bottom: 18px; height: 30px; }
+      .tl-time { display: none; }
+      .lgi-swatch { width: 44px; }
+      .lgi-label { font-size: 7px; }
     }
 
   /* ─── FOOTER ─── */
@@ -669,24 +680,24 @@ footer {
         <div class="map-info-metric full"><div class="map-info-val" id="infoDur"></div><div class="map-info-lbl">duration</div></div>
       </div>
 
-      <!-- Basemap toggle -->
-      <div class="map-style-toggle">
-        <button class="style-btn active" id="btnDark" onclick="setMapStyle('dark')">DARK</button>
-        <button class="style-btn" id="btnLight" onclick="setMapStyle('light')">LIGHT</button>
-        <button class="style-btn" id="btnSat" onclick="setMapStyle('sat')">SAT</button>
-      </div>
-
-      <!-- Speed legend: floating bottom-right -->
-      <div class="legend">
-        <div class="legend-title">Speed heatmap</div>
-        <div class="legend-swatch" style="background:linear-gradient(to right,#4575b4,#74add1,#abd9e9,#fee090,#f46d43,#d73027)"></div>
-        <div class="legend-labels">
-          <span class="legend-label">0 km/h</span>
-          <span class="legend-label" id="legendMax">— km/h</span>
+      <!-- Unified bottom bar -->
+      <div class="map-bottom-bar">
+        <div class="map-style-toggle">
+          <button class="style-btn active" id="btnDark"  onclick="setMapStyle('dark')">DARK</button>
+          <button class="style-btn"        id="btnLight" onclick="setMapStyle('light')">LIGHT</button>
+          <button class="style-btn"        id="btnSat"   onclick="setMapStyle('sat')">SAT</button>
         </div>
-        <div class="legend-row" style="margin-top:8px; gap:8px;">
-          <div style="width:80px; height:3px; background:#333333; box-shadow:0 0 0 1.5px rgba(255,255,255,0.65);"></div>
-          <span class="legend-label">Lift</span>
+        <div class="map-timeline" id="mapTimeline">
+          <span class="tl-time">0:00</span>
+          <div class="tl-canvas-wrap"><canvas id="timelineCanvas"></canvas></div>
+          <span class="tl-time" id="timelineEnd">—</span>
+        </div>
+        <div class="map-legend-inline">
+          <span class="lgi-label">0</span>
+          <div class="lgi-swatch"></div>
+          <span class="lgi-label" id="legendMax">— km/h</span>
+          <div class="lgi-lift"></div>
+          <span class="lgi-label">Lift</span>
         </div>
       </div>
 
@@ -894,8 +905,9 @@ footer {
     // Update legend max speed
     document.getElementById('legendMax').textContent = Math.round(p.max_speed_kmh) + ' km/h';
 
-    // Draw selected track with speed heatmap
+    // Draw selected track with speed heatmap + timeline
     drawTrack(f);
+    drawTimeline(f);
 
     // Fit to track bounds
     const coords2d = f.geometry.coordinates.map(c => [c[0], c[1]]);
@@ -942,6 +954,59 @@ footer {
       });
     }
     map.getSource('run-track').setData({ type: 'FeatureCollection', features: segments });
+  }
+
+  // ─── SPEED → COLOR (matches MapboxGL interpolation) ──────────────────
+  function speedToColor(spd) {
+    const stops = [
+      [0,[69,117,180]],[15,[116,173,209]],[25,[171,217,233]],
+      [35,[254,224,144]],[50,[244,109,67]],[70,[215,48,39]]
+    ];
+    for (let i = 1; i < stops.length; i++) {
+      if (spd <= stops[i][0]) {
+        const t = (spd - stops[i-1][0]) / (stops[i][0] - stops[i-1][0]);
+        const [r1,g1,b1] = stops[i-1][1], [r2,g2,b2] = stops[i][1];
+        return `rgb(${~~(r1+(r2-r1)*t)},${~~(g1+(g2-g1)*t)},${~~(b1+(b2-b1)*t)})`;
+      }
+    }
+    return 'rgb(215,48,39)';
+  }
+
+  // ─── TIMELINE BAR ─────────────────────────────────────────────────────
+  function drawTimeline(f) {
+    const tl     = document.getElementById('mapTimeline');
+    const canvas = document.getElementById('timelineCanvas');
+    if (!tl || !canvas) return;
+
+    const coords = f.geometry.coordinates;
+    const speeds = f.properties.speeds || [];
+    const times  = f.properties.times  || [];
+    if (times.length < 2) return;
+
+    const total = times[times.length - 1] || 1;
+    const wrap  = canvas.parentElement;
+    const W = wrap.offsetWidth, H = wrap.offsetHeight;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const WIN = 5;
+    for (let i = 1; i < times.length; i++) {
+      const x0 = Math.floor((times[i-1] / total) * W);
+      const x1 = Math.ceil( (times[i]   / total) * W);
+      const lo = Math.max(0, i - WIN);
+      const hi = Math.min(coords.length - 1, i + WIN);
+      const altDelta = (coords[hi][2] || 0) - (coords[lo][2] || 0);
+      const spd = speeds[i] || 0;
+
+      if (altDelta > 14)   ctx.fillStyle = '#555555';          // lift
+      else if (spd < 2)    ctx.fillStyle = 'rgba(255,255,255,0.18)'; // stationary
+      else                 ctx.fillStyle = speedToColor(spd);   // run
+
+      ctx.fillRect(x0, 0, Math.max(x1 - x0, 1), H);
+    }
+
+    document.getElementById('timelineEnd').textContent = formatDuration(total);
+    tl.classList.add('visible');
   }
 
   function formatDuration(seconds) {
