@@ -1,0 +1,83 @@
+[
+  {
+    "file": "airport-ols.html",
+    "title": "Airport OLS & Hazard Tree Analysis",
+    "eyebrow": "",
+    "systemLine": "",
+    "summary": "",
+    "metrics": []
+  },
+  {
+    "file": "asset-monitoring.html",
+    "title": "Asset Monitoring System",
+    "eyebrow": "",
+    "systemLine": "",
+    "summary": "",
+    "metrics": []
+  },
+  {
+    "file": "bioregional-atlas.html",
+    "title": "Bioregional Atlas",
+    "eyebrow": "03Bioregional Spatial Intelligence Framework",
+    "systemLine": "Spatial Intelligence System · BC Bioregion",
+    "summary": "Integrated provincial datasets, LiDAR analysis, and automated map production into a scalable bioregional spatial intelligence framework — designed to support land-use planning, environmental review, and resource management decisions where spatial context determines what options are even on the table.",
+    "metrics": [
+      {
+        "value": "20+",
+        "label": "Study Sites"
+      },
+      {
+        "value": "15+",
+        "label": "Map Themes"
+      },
+      {
+        "value": "40+",
+        "label": "Spatial Layers"
+      },
+      {
+        "value": "6",
+        "label": "Theme Groups"
+      }
+    ]
+  },
+  {
+    "file": "etl-geodatabase.html",
+    "title": "Geospatial ETL & Geodatabase Automation",
+    "eyebrow": "",
+    "systemLine": "",
+    "summary": "",
+    "metrics": []
+  },
+  {
+    "file": "hydrological-assessment.html",
+    "title": "Hydrological Assessment",
+    "eyebrow": "",
+    "systemLine": "",
+    "summary": "",
+    "metrics": []
+  },
+  {
+    "file": "snowboard.html",
+    "title": "",
+    "eyebrow": "",
+    "systemLine": "",
+    "summary": "",
+    "metrics": []
+  },
+  {
+    "file": "stockpile-volume.html",
+    "title": "Stockpile Volume Estimation",
+    "eyebrow": "",
+    "systemLine": "",
+    "summary": "",
+    "metrics": []
+  },
+  {
+    "file": "terrain-modeling.html",
+    "title": "Terrain Modeling",
+    "eyebrow": "",
+    "systemLine": "",
+    "summary": "",
+    "metrics": []
+  }
+]
