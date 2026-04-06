@@ -4,17 +4,3 @@ Data/
 .DS_Store
 Thumbs.db
 deploy.bat
-
-# OpenClaw workspace (not part of portfolio site)
-.openclaw/
-.clawhub/
-.clawtraces/
-AGENTS.md
-SOUL.md
-USER.md
-MEMORY.md
-IDENTITY.md
-TOOLS.md
-HEARTBEAT.md
-memory/
-skills/
