@@ -716,32 +716,32 @@ footer {
 
   <!-- NAV -->
   <nav>
-  <a href="../index.html" class="nav-logo">yang<span>.spatial</span></a>
+  <a href="index.html" class="nav-logo">yang<span>.spatial</span></a>
   <div class="nav-right">
-    <a href="../index.html" class="nav-home">Home</a>
+    <a href="index.html" class="nav-home">Home</a>
     <div class="nav-mega-item">
       <button class="nav-menu-trigger">Menu <span class="nav-chevron">&#9660;</span></button>
       <div class="nav-mega-drop">
         <div class="mega-col">
-          <a href="../index.html#case-studies" class="mega-head">Work</a>
-          <a href="../asset-monitoring.html" class="mega-link">Asset Management</a>
-          <a href="../bioregional-atlas.html" class="mega-link">Bioregional Atlas</a>
-          <a href="../stockpile-volume.html" class="mega-link">Stockpile Volume</a>
+          <a href="index.html#case-studies" class="mega-head">Work</a>
+          <a href="asset-monitoring.html" class="mega-link">Asset Management</a>
+          <a href="bioregional-atlas.html" class="mega-link">Bioregional Atlas</a>
+          <a href="stockpile-volume.html" class="mega-link">Stockpile Volume</a>
         </div>
         <div class="mega-col">
-          <a href="../index.html#wiww" class="mega-head">Capabilities</a>
-          <a href="../airport-ols.html" class="mega-link">Airport OLS &amp; Hazard Detection</a>
-          <a href="../terrain-modeling.html" class="mega-link">Terrain Modeling</a>
-          <a href="../hydrological-assessment.html" class="mega-link">Hydrological Assessment</a>
-          <a href="../etl-geodatabase.html" class="mega-link">Geospatial ETL</a>
+          <a href="index.html#wiww" class="mega-head">Capabilities</a>
+          <a href="airport-ols.html" class="mega-link">Airport OLS &amp; Hazard Detection</a>
+          <a href="terrain-modeling.html" class="mega-link">Terrain Modeling</a>
+          <a href="hydrological-assessment.html" class="mega-link">Hydrological Assessment</a>
+          <a href="etl-geodatabase.html" class="mega-link">Geospatial ETL</a>
         </div>
         <div class="mega-col">
-          <a href="../index.html#stack" class="mega-head">Stack</a>
-          <a href="../index.html#about" class="mega-head">About</a>
+          <a href="index.html#stack" class="mega-head">Stack</a>
+          <a href="index.html#about" class="mega-head">About</a>
           <button class="mega-link" onclick="downloadCV(event)">Download CV &#8595;</button>
-          <a href="../index.html#posts" class="mega-head">Posts</a>
+          <a href="index.html#posts" class="mega-head">Posts</a>
           <a href="snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
-          <a href="cross-device-obsidian-llm-wiki.html" class="mega-link">Cross-Device Note System &#8594;</a>
+          <a href="_posts/cross-device-obsidian-llm-wiki.html" class="mega-link">Cross-Device Note System &#8594;</a>
         </div>
         <div class="mega-col">
           <a href="#contact" class="mega-head">Contact</a>
@@ -1017,7 +1017,7 @@ footer {
   async function init() {
     setStatus('loading', 'Loading sessions...');
     try {
-      const resp = await fetch('../asset/snowboard-runs.geojson');
+      const resp = await fetch('asset/snowboard-runs.geojson');
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const geojson = await resp.json();
       allFeatures = geojson.features;
@@ -1398,6 +1398,6 @@ footer {
 </div>
 
 <footer>&#169; 2025 Chenghao Yang &nbsp;&middot;&nbsp; Vancouver, BC &nbsp;&middot;&nbsp; Built with GitHub Pages</footer>
-<script src="../scripts/dev-banner.js"></script>
+<script src="scripts/dev-banner.js"></script>
 </body>
 </html>
