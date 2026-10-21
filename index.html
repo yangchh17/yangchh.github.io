@@ -765,7 +765,9 @@ footer {
 
   setTimeout(function () {
     m.invalidateSize();
-    m.setView([47.05, -139.1207], 5);
+    // Slightly shift the map framing on narrow screens; keep desktop framing unchanged.
+    var mobileView = window.matchMedia('(max-width: 720px)').matches;
+    m.setView([47.05, mobileView ? -136.5 : -139.1207], 5);
     setTimeout(function () {
       setInterval(function () {
         m.panBy([30, 0], {animate: true, duration: 6});
