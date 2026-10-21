@@ -1,0 +1,79 @@
+/* P0 navigation fixes — preserve the existing portfolio palette and type. */
+html { scroll-padding-top: 64px; }
+
+.nav-menu-trigger {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.nav-menu-trigger:focus-visible,
+.nav-logo:focus-visible,
+.nav-home:focus-visible,
+.nav-mega-drop a:focus-visible,
+.nav-mega-drop button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.nav-menu-trigger[aria-expanded="true"] { color: var(--accent); }
+.nav-menu-trigger[aria-expanded="true"] .nav-chevron { transform: rotate(180deg); }
+
+/* Escape and explicit dismissal override hover/focus opening. */
+nav .nav-mega-item.is-dismissed:hover .nav-mega-drop,
+nav .nav-mega-item.is-dismissed:focus-within .nav-mega-drop { display: none; }
+
+nav .nav-mega-drop.is-open { display: grid; }
+.nav-mega-item:focus-within .nav-mega-drop { display: grid; }
+
+@media (max-width: 720px) {
+  nav { padding: 0 16px 0 20px; }
+  .nav-right { min-width: 0; }
+  .nav-home { padding: 0 12px; margin-right: 0; }
+  .nav-menu-trigger { padding: 0 12px; }
+
+  /* On touch layouts, opening is controlled by the button, not hover. */
+  nav .nav-mega-item:hover .nav-mega-drop:not(.is-open),
+  nav .nav-mega-item:focus-within .nav-mega-drop:not(.is-open) {
+    display: none;
+  }
+
+  nav .nav-mega-drop {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: calc(100vh - 52px);
+    max-height: calc(100dvh - 52px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 18px;
+    border-top-width: 2px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.10);
+  }
+
+  .mega-col { min-width: 0; }
+  .mega-head { line-height: 1.5; overflow-wrap: anywhere; }
+  .mega-link {
+    min-height: 32px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 420px) {
+  nav .nav-mega-drop {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .mega-head + .mega-head,
+  .mega-link + .mega-head { margin-top: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .nav-chevron { transition: none; }
+}

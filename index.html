@@ -444,6 +444,7 @@ footer {
 .leaflet-popup-content { margin: 6px 14px; line-height: 1.3; }
 
 </style>
+  <link rel="stylesheet" href="styles/navigation.css"/>
 </head>
 <body>
 
@@ -453,7 +454,7 @@ footer {
   <div class="nav-right">
     <a href="index.html" class="nav-home">Home</a>
     <div class="nav-mega-item">
-      <button class="nav-menu-trigger">Menu <span class="nav-chevron">&#9660;</span></button>
+      <button class="nav-menu-trigger" type="button" aria-controls="site-navigation-menu" aria-expanded="false">Menu <span class="nav-chevron">&#9660;</span></button>
       <div class="nav-mega-drop">
         <div class="mega-col">
           <a href="#case-studies" class="mega-head">Work</a>
@@ -471,7 +472,7 @@ footer {
         <div class="mega-col">
           <a href="#stack" class="mega-head">Stack</a>
           <a href="#about" class="mega-head">About</a>
-          <button class="mega-link" onclick="downloadCV(event)">Download CV &#8595;</button>
+          <a href="asset/cv.pdf" class="mega-link" download="Chenghao_Yang_CV.pdf">Download CV &#8595;</a>
           
           <a href="#posts" class="mega-head">Posts</a>
           <a href="posts/snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
@@ -671,7 +672,7 @@ footer {
       <p>MSc in Geomatics for Environmental Management (UBC). BSc in Environmental Science with GIS Certificate (SFU). Currently a G.I.T. Applicant and drone pilot (basic).</p>
       <div class="about-actions">
         <a href="#contact" class="btn btn-fill">Contact me</a>
-        <a href="#" class="btn btn-ghost" onclick="downloadCV(event)">Download CV</a>
+        <a href="asset/cv.pdf" class="btn btn-ghost" download="Chenghao_Yang_CV.pdf">Download CV</a>
       </div>
     </div>
     <div>
@@ -840,19 +841,7 @@ footer {
 }());
 </script>
 
-<!-- ── CV ── -->
-<script>
-function downloadCV(e) {
-  e.preventDefault();
-  var l = document.createElement('a');
-  l.href = 'asset/cv.pdf';
-  l.download = 'Chenghao_Yang_CV.pdf';
-  document.body.appendChild(l);
-  l.click();
-  document.body.removeChild(l);
-}
-</script>
-
 <script src="scripts/dev-banner.js"></script>
+  <script src="scripts/navigation.js"></script>
 </body>
 </html>
