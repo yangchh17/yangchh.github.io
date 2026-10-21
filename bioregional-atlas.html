@@ -385,6 +385,7 @@ footer {
 .btn-ghost { background: transparent; color: var(--text); border-color: var(--border-m); }
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 </style>
+  <link rel="stylesheet" href="styles/navigation.css"/>
 </head>
 <body>
 
@@ -393,7 +394,7 @@ footer {
   <div class="nav-right">
     <a href="index.html" class="nav-home">Home</a>
     <div class="nav-mega-item">
-      <button class="nav-menu-trigger">Menu <span class="nav-chevron">&#9660;</span></button>
+      <button class="nav-menu-trigger" type="button" aria-controls="site-navigation-menu" aria-expanded="false" aria-haspopup="true">Menu <span class="nav-chevron">&#9660;</span></button>
       <div class="nav-mega-drop">
         <div class="mega-col">
           <a href="index.html#case-studies" class="mega-head">Work</a>
@@ -1403,5 +1404,6 @@ window.toggleGate = function(id){
 
 <footer>&#169; 2025 Chenghao Yang &nbsp;&middot;&nbsp; Vancouver, BC &nbsp;&middot;&nbsp; Built with GitHub Pages</footer>
 <script src="scripts/dev-banner.js"></script>
+  <script src="scripts/navigation.js"></script>
 </body>
 </html>
