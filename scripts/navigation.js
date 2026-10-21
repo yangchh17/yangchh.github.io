@@ -4,14 +4,14 @@
   var nav = document.querySelector('nav');
   if (!nav) return;
 
+  var item = nav.querySelector('.nav-mega-item');
   var trigger = nav.querySelector('.nav-menu-trigger');
   var panel = nav.querySelector('.nav-mega-drop');
-  if (!trigger || !panel) return;
+  if (!item || !trigger || !panel) return;
 
   if (!panel.id) panel.id = 'site-navigation-menu';
   trigger.setAttribute('aria-controls', panel.id);
   trigger.setAttribute('aria-expanded', 'false');
-  trigger.setAttribute('aria-haspopup', 'true');
 
   function isOpen() {
     return trigger.getAttribute('aria-expanded') === 'true';
@@ -19,6 +19,7 @@
 
   function setOpen(open, returnFocus) {
     panel.classList.toggle('is-open', open);
+    item.classList.toggle('is-dismissed', !open);
     trigger.setAttribute('aria-expanded', String(open));
     if (returnFocus) trigger.focus();
   }
@@ -45,8 +46,8 @@
     }
   });
 
-  panel.querySelectorAll('a, button').forEach(function (item) {
-    item.addEventListener('click', function () {
+  panel.querySelectorAll('a, button').forEach(function (link) {
+    link.addEventListener('click', function () {
       setOpen(false, false);
     });
   });
@@ -59,5 +60,16 @@
     window.setTimeout(function () {
       if (!nav.contains(document.activeElement)) setOpen(false, false);
     }, 0);
+  });
+
+  /* Keep the desktop hover affordance while keeping ARIA state in sync. */
+  item.addEventListener('pointerenter', function (event) {
+    if (event.pointerType !== 'touch') setOpen(true, false);
+  });
+
+  item.addEventListener('pointerleave', function (event) {
+    if (event.pointerType !== 'touch' && !item.contains(document.activeElement)) {
+      setOpen(false, false);
+    }
   });
 }());
