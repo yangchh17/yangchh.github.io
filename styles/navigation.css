@@ -18,6 +18,10 @@ html { scroll-padding-top: 64px; }
 .nav-menu-trigger[aria-expanded="true"] { color: var(--accent); }
 .nav-menu-trigger[aria-expanded="true"] .nav-chevron { transform: rotate(180deg); }
 
+/* Escape and explicit dismissal override hover/focus opening. */
+nav .nav-mega-item.is-dismissed:hover .nav-mega-drop,
+nav .nav-mega-item.is-dismissed:focus-within .nav-mega-drop { display: none; }
+
 nav .nav-mega-drop.is-open { display: grid; }
 .nav-mega-item:focus-within .nav-mega-drop { display: grid; }
 
