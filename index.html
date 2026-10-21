@@ -444,6 +444,7 @@ footer {
 .leaflet-popup-content { margin: 6px 14px; line-height: 1.3; }
 
 </style>
+  <link rel="stylesheet" href="styles/navigation.css"/>
 </head>
 <body>
 
@@ -453,7 +454,7 @@ footer {
   <div class="nav-right">
     <a href="index.html" class="nav-home">Home</a>
     <div class="nav-mega-item">
-      <button class="nav-menu-trigger">Menu <span class="nav-chevron">&#9660;</span></button>
+      <button class="nav-menu-trigger" type="button" aria-controls="site-navigation-menu" aria-expanded="false" aria-haspopup="true">Menu <span class="nav-chevron">&#9660;</span></button>
       <div class="nav-mega-drop">
         <div class="mega-col">
           <a href="#case-studies" class="mega-head">Work</a>
@@ -854,5 +855,6 @@ function downloadCV(e) {
 </script>
 
 <script src="scripts/dev-banner.js"></script>
+  <script src="scripts/navigation.js"></script>
 </body>
 </html>
