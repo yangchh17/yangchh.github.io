@@ -437,6 +437,15 @@ footer {
   .contact-inner { flex-direction: column; align-items: flex-start; }
 }
 
+@media (max-width: 420px) {
+  /* Keep the two-line name inside narrow phone viewports. */
+  h1.hero-name {
+    font-size: clamp(36px, 11.5vw, 52px);
+    letter-spacing: -.04em;
+  }
+}
+
+
   
 /* Leaflet popup — matches portfolio palette */
 .leaflet-popup-content-wrapper { background: #f8f4ee; border: 1px solid #e8e0d4; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
@@ -475,7 +484,7 @@ footer {
           <a href="asset/cv.pdf" class="mega-link" download="Chenghao_Yang_CV.pdf">Download CV &#8595;</a>
           
           <a href="#posts" class="mega-head">Posts</a>
-          <a href="posts/snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
+          <a href="snowboard.html" class="mega-link">Snowboard Log &#8594;</a>
           <a href="posts/cross-device-obsidian-llm-wiki.html" class="mega-link">Cross-Device Note System &#8594;</a>
         </div>
         <div class="mega-col">
@@ -692,7 +701,7 @@ footer {
 <div class="wrap" id="posts">
   <div class="sec-eyebrow">Posts</div>
   <div class="offpiste-row">
-    <a href="posts/snowboard.html" class="op-card">
+    <a href="snowboard.html" class="op-card">
       <div class="op-sub">Snowboard log</div>
       <div class="op-title">Riding the mountains</div>
       <p class="op-body">GPS tracks, speed heatmaps, and vertical drop stats from Whistler, Big White, and beyond &#8212; pulled live from Strava.</p>
